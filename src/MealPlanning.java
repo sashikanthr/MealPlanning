@@ -1,3 +1,5 @@
+import com.sun.xml.internal.ws.util.StringUtils;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -39,7 +41,20 @@ public class MealPlanning {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        printRecipes(allRecipes);
+        //printRecipes(allRecipes);
+        getBestOrder(allRecipes);
+    }
+
+    private static void getBestOrder(List<Recipe> allRecipes) {
+
+        GeneticAlgorithm geneticAlgorithm = new GeneticAlgorithm(allRecipes);
+        List<Chromosome> population = geneticAlgorithm.generatePopulation();
+        for(Chromosome chromosome:population) {
+            System.out.println();
+            chromosome.representation();
+
+        }
+
     }
 
     private static void printRecipes(List<Recipe> allRecipes) {
@@ -57,7 +72,7 @@ public class MealPlanning {
         Activity activity = new Activity();
 
         String[] parameters = line.split(Constants.DELIMITER);
-        activity.setPriority(Integer.parseInt(parameters[0]));
+        activity.setPriority(Double.parseDouble(parameters[0]));
         if("1".equalsIgnoreCase(parameters[1])) {
             activity.setHumanNeeded(true);
         } else {
@@ -88,10 +103,13 @@ public class MealPlanning {
     }
 
     private static Resource prepareResource(String resourceParameter) {
+
         Resource resource = new Resource();
-        String[] resourceParameterValues  = resourceParameter.trim().split(Constants.RESOURCE_QUANTITY_DELIMITER);
-        resource.setResourceName(resourceParameterValues[0].trim());
-        resource.setQuantity(Integer.parseInt(resourceParameterValues[1].trim()));
+        if(resourceParameter!=null && !resourceParameter.isEmpty()) {
+            String[] resourceParameterValues = resourceParameter.trim().split(Constants.RESOURCE_QUANTITY_DELIMITER);
+            resource.setResourceName(resourceParameterValues[0].trim());
+            resource.setQuantity(Integer.parseInt(resourceParameterValues[1].trim()));
+        }
         return resource;
     }
 }

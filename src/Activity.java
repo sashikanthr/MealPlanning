@@ -5,17 +5,17 @@ import java.util.Set;
 
 public class Activity {
 
-    private int priority;
+    private double priority;
     private boolean isHumanNeeded;
     private String action;
     List<Resource> resourcesNeeded = new ArrayList<>();
     private TimeUnits timeUnitsNeeded;
 
-    public int getPriority() {
+    public double getPriority() {
         return priority;
     }
 
-    public void setPriority(int priority) {
+    public void setPriority(double priority) {
         this.priority = priority;
     }
 
