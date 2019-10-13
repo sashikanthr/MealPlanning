@@ -48,12 +48,13 @@ public class MealPlanning {
     private static void getBestOrder(List<Recipe> allRecipes) {
 
         GeneticAlgorithm geneticAlgorithm = new GeneticAlgorithm(allRecipes);
-        List<Chromosome> population = geneticAlgorithm.generatePopulation();
-        for(Chromosome chromosome:population) {
+        List<Chromosome> population = geneticAlgorithm.generateInitialPopulation();
+        /*for(Chromosome chromosome:population) {
             System.out.println();
             chromosome.representation();
 
-        }
+        }*/
+        geneticAlgorithm.crossOver();
 
     }
 

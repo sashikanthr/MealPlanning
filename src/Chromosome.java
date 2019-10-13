@@ -1,7 +1,4 @@
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class Chromosome {
 
@@ -12,7 +9,22 @@ public class Chromosome {
 
     private List<Gene> genes;
 
-    Chromosome(List<Recipe> recipes) {
+    public Chromosome(){
+
+    }
+
+    public Chromosome(int size){
+
+        genes = new ArrayList<>(size);
+
+        for(int i=0;i<size;i++) {
+
+            genes.add(new Gene());
+        }
+
+    }
+
+    public Chromosome(List<Recipe> recipes) {
 
         genes = new ArrayList<>();
         for (Recipe recipe : recipes) {
@@ -23,6 +35,10 @@ public class Chromosome {
         }
 
         Collections.shuffle(genes);
+    }
+
+    public void addGene(Gene gene) {
+        this.genes.add(gene);
     }
 
     public List<Gene> getGenes() {
@@ -41,6 +57,14 @@ public class Chromosome {
 
         private int recipeIndex;
         private int activityIndex;
+
+        public Gene() {
+
+            recipeIndex = new Random().nextInt(Constants.maxNegative-Constants.minNegative)+Constants.minNegative;
+            activityIndex = new Random().nextInt(Constants.maxNegative-Constants.minNegative)+Constants.minNegative;
+
+
+        }
 
          public Gene(int recipeIndex, int activityIndex) {
              this.recipeIndex = recipeIndex;
