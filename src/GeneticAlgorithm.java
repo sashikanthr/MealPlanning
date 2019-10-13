@@ -1,15 +1,34 @@
+import java.util.ArrayList;
+import java.util.List;
+
 public class GeneticAlgorithm {
-      private List<Chromosome> population;
 
-    public void generateInitialPopulation() {
+    private List<Recipe> recipes;
 
+    private List<Chromosome> population;
+
+     public GeneticAlgorithm(List<Recipe> recipes) {
+
+         this.recipes = recipes;
+
+     }
+
+     public List<Chromosome> generatePopulation() {
+
+         population = new ArrayList<>(Constants.NUMBER_OF_CHROMOSOMES);
+         int counter=0;
+         while(counter<Constants.NUMBER_OF_CHROMOSOMES) {
+             population.add(new Chromosome(recipes));
+             counter++;
+         }
+         return population;
     }
 
     public void evaluatePopulation() {
-        double[] popScore = new double[population.length];
+        /*double[] popScore = new double[population.length];
         for (int i = 0; i < population.length; i++) {
             popScore[i] = evaluate(population[i]);
-        }
+        }*/
 
     }
     
