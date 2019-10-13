@@ -1,6 +1,6 @@
 public class TimeUnits {
 
-    int timeUnits;
+    private int timeUnits;
     //Need to represent timeUnits with actual time. 5 TUs can be 5 mins in the meal planning case.
 
     public int getTimeUnits() {

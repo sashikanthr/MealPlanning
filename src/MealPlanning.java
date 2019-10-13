@@ -14,103 +14,30 @@ public class MealPlanning {
 
         //Read Recipes. File location can be mentioned in the args. If not mentioned, it will take the default location
 
-        String fileLocation = System.getProperty("user.dir")+"\\Recipes.txt";
+        String recipeLocation = System.getProperty("user.dir")+"\\Recipes.txt";
+        String resourceLocation = System.getProperty("user.dir")+"\\AvailableResources.txt";
         if(args.length>0) {
-            fileLocation = args[0];
+            recipeLocation = args[0];
+        } else if(args.length>1) {
+            resourceLocation = args[1];
         }
-        List<Recipe> allRecipes = new ArrayList<>();
-        try (Stream<String> stream = Files.lines(Paths.get(fileLocation))) {
-            Consumer<String> prepareRecipe = line -> {
-
-                if("*".equalsIgnoreCase(line)) {
-                    allRecipes.add(new Recipe());
-                } else {
-
-                    Recipe recipe = allRecipes.get(allRecipes.size()-1);
-                    if(line.split(Constants.DELIMITER).length>2) {
-                        recipe.addActivity(prepareActivity(line));
-                    } else {
-                        String[] parameters = line.split(Constants.DELIMITER);
-                        recipe.setPriority(Integer.parseInt(parameters[0]));
-                        recipe.setName(parameters[1]);
-                    }
-                }
-            };
-            stream.forEach(prepareRecipe);
-            allRecipes.removeIf(recipe->recipe.getActivities().isEmpty());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        //printRecipes(allRecipes);
-        getBestOrder(allRecipes);
+        List<Recipe> recipes = RecipeService.loadRecipes(recipeLocation);
+        List<Resource> availableResources = ResourceService.loadResources(resourceLocation);
+       // ResourceService.printResources();
+        getBestOrder(recipes);
+        System.out.println(RecipeService.getTotalTimeUnitsNeededForAllActivities());
     }
 
     private static void getBestOrder(List<Recipe> allRecipes) {
 
         GeneticAlgorithm geneticAlgorithm = new GeneticAlgorithm(allRecipes);
         List<Chromosome> population = geneticAlgorithm.generateInitialPopulation();
-        /*for(Chromosome chromosome:population) {
-            System.out.println();
-            chromosome.representation();
-
-        }*/
+        geneticAlgorithm.evaluatePopulation();
         geneticAlgorithm.crossOver();
+        geneticAlgorithm.evaluateOffSpring();
+        geneticAlgorithm.getBestFitnessValue();
 
     }
 
-    private static void printRecipes(List<Recipe> allRecipes) {
 
-        Consumer<? super Recipe> printRecipe = recipe -> {
-
-            System.out.println(recipe);
-            recipe.getActivities().forEach(System.out::println);
-        };
-        allRecipes.forEach(printRecipe);
-    }
-
-    private static Activity prepareActivity(String line) {
-
-        Activity activity = new Activity();
-
-        String[] parameters = line.split(Constants.DELIMITER);
-        activity.setPriority(Double.parseDouble(parameters[0]));
-        if("1".equalsIgnoreCase(parameters[1])) {
-            activity.setHumanNeeded(true);
-        } else {
-            activity.setHumanNeeded(false);
-        }
-        activity.setAction(parameters[2]);
-        activity.setResourcesNeeded(prepareResourceList(parameters[3]));
-        activity.setTimeUnitsNeeded(prepareTimeUnits(parameters[4]));
-
-        return activity;
-    }
-
-    private static TimeUnits prepareTimeUnits(String parameter) {
-
-        TimeUnits timeUnit = new TimeUnits();
-        timeUnit.setTimeUnits(Integer.parseInt(parameter));
-        return timeUnit;
-    }
-
-    private static List<Resource> prepareResourceList(String parameter) {
-
-        List<Resource> resources = new ArrayList<>();
-        String[] resourceParameters = parameter.split(Constants.RESOURCE_DELIMITER);
-        for(String resource:resourceParameters) {
-            resources.add(prepareResource(resource));
-        }
-        return resources;
-    }
-
-    private static Resource prepareResource(String resourceParameter) {
-
-        Resource resource = new Resource();
-        if(resourceParameter!=null && !resourceParameter.isEmpty()) {
-            String[] resourceParameterValues = resourceParameter.trim().split(Constants.RESOURCE_QUANTITY_DELIMITER);
-            resource.setResourceName(resourceParameterValues[0].trim());
-            resource.setQuantity(Integer.parseInt(resourceParameterValues[1].trim()));
-        }
-        return resource;
-    }
 }

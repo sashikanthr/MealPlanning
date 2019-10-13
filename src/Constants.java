@@ -11,4 +11,8 @@ public class Constants {
     public static final int maxNegative = -1;
 
     public static final int NUMBER_OF_CHROMOSOMES = 1000;
+
+    public static final String HUMAN = "HUMAN";
+
+    public static final int PENALTY_FOR_ITERATION = 10;
 }

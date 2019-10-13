@@ -11,6 +11,16 @@ public class Activity {
     List<Resource> resourcesNeeded = new ArrayList<>();
     private TimeUnits timeUnitsNeeded;
 
+    public boolean isActivityComplete() {
+        return isActivityComplete;
+    }
+
+    public void setActivityComplete(boolean activityComplete) {
+        isActivityComplete = activityComplete;
+    }
+
+    private boolean isActivityComplete;
+
     public double getPriority() {
         return priority;
     }

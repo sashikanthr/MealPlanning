@@ -1,8 +1,26 @@
+import java.util.Objects;
+
 public class Resource {
 
     private String resourceName;
     private int quantity;
-    private Boolean available;
+
+    public void setAvailable(boolean available) {
+        this.available = available;
+    }
+
+    private boolean available;
+
+    public int getOriginalQuantity() {
+        return originalQuantity;
+    }
+
+    public void setOriginalQuantity(int originalQuantity) {
+        this.originalQuantity = originalQuantity;
+    }
+
+    private int originalQuantity;
+
 
     public String getResourceName() {
         return resourceName;
@@ -20,22 +38,41 @@ public class Resource {
         this.quantity = quantity;
     }
     
-    public Boolean isAvailable() {
+    public boolean isAvailable() {
         return available;
     }
     
-    public void use() {
-        if (available) {
-            available = false;
-        } else {
-            //do something - tell to wait
+    public boolean use(int quantity) {
+
+        if(available) {
+
+            if(this.quantity>=quantity) {
+                this.quantity-=quantity;
+                if(this.quantity==0) {
+                    available = false;
+                }
+                return true;
+            }
+
         }
+        return false;
+    }
+
+    public void release(int quantity) {
+
+        this.quantity+=quantity;
+        available = true;
     }
     
-    public void free() {
-        // we should check that the one who is holding it is the one who frees 
-        // it - use a semaphore/lock?
-        available = true;
+    public boolean isFree(int quantity) {
+
+        if(available) {
+
+            if (this.quantity >= quantity) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -44,5 +81,18 @@ public class Resource {
                 "resourceName='" + resourceName + '\'' +
                 ", quantity=" + quantity +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Resource resource = (Resource) o;
+        return Objects.equals(resourceName, resource.resourceName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(resourceName);
     }
 }

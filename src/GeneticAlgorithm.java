@@ -1,6 +1,3 @@
-import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer;
-
-import java.sql.SQLOutput;
 import java.util.*;
 
 public class GeneticAlgorithm {
@@ -11,11 +8,17 @@ public class GeneticAlgorithm {
 
     private List<Chromosome> offSpring = new ArrayList<>();
 
+    Map<Chromosome,Integer> fitnessPopulation = new HashMap<>();
+
+    Map<Chromosome,Integer> fitnessOffspring = new HashMap<>();
+
      public GeneticAlgorithm(List<Recipe> recipes) {
 
          this.recipes = recipes;
 
      }
+
+
 
      public List<Chromosome> generateInitialPopulation() {
 
@@ -29,13 +32,129 @@ public class GeneticAlgorithm {
     }
 
     public void evaluatePopulation() {
-        /*double[] popScore = new double[population.length];
-        for (int i = 0; i < population.length; i++) {
-            popScore[i] = evaluate(population[i]);
-        }*/
+
+        for(Chromosome chromosome: population) {
+
+            fitnessPopulation.put(chromosome,calculateFitness(chromosome.getGenes()));
+            RecipeService.resetCompleteStatusOnAllActivities();
+
+        }
 
     }
-    
+
+    public int getBestFitnessValue() {
+
+         int bestFitness = Integer.MAX_VALUE;
+         Chromosome bestChromosome = null;
+         System.out.println("Processing parents..");
+        for (Map.Entry<Chromosome, Integer> entry : fitnessPopulation.entrySet()) {
+
+            if(entry.getValue()<bestFitness) {
+                bestFitness = entry.getValue();
+                bestChromosome = entry.getKey();
+            }
+
+        }
+        System.out.println("Best Chromosome.."+bestChromosome.getGenes()+" with fitness value.."+bestFitness);
+
+        int bestFitnessOffspring = Integer.MAX_VALUE;
+        Chromosome bestChromosomeOffspring = null;
+        System.out.println("Processing offspring..");
+        for (Map.Entry<Chromosome, Integer> entry : fitnessOffspring.entrySet()) {
+
+            if(entry.getValue()<bestFitnessOffspring) {
+                bestFitnessOffspring = entry.getValue();
+                bestChromosomeOffspring = entry.getKey();
+            }
+
+        }
+
+        System.out.println("Best Chromosome.."+bestChromosomeOffspring.getGenes()+" with fitness value.."+bestFitnessOffspring);
+        if(bestFitnessOffspring<bestFitness) {
+            return bestFitnessOffspring;
+        }
+         return bestFitness;
+    }
+
+    public void evaluateOffSpring() {
+
+        for(Chromosome chromosome: offSpring) {
+
+            fitnessOffspring.put(chromosome,calculateFitness(chromosome.getGenes()));
+            RecipeService.resetCompleteStatusOnAllActivities();
+
+        }
+
+    }
+
+    /*
+    Here fitness is based on number of iterations. According to the recipes, an activity can be run simultaneously
+    with other activities or it has to wait for the predecessor activities to complete. Also for the activity to be
+    completed, there must be available resources. Here for each iteration, we will execute all the activities that
+    can be completed concurrently. Ones which cannot be completed will be added to a queue which will be processed
+    as part of the next iteration. For each iteration there will be a penalty. And during, one iteration the resources
+    are shared. At the end of the iteration, the resources are released. At the end of all iterations, we get the final
+    value of the fitness. The shortest value is the fittest chromosome.
+     */
+
+    private int calculateFitness(List<Chromosome.Gene> genes) {
+
+        int recipeIndex;
+        int activityIndex;
+        int totalTimeUnits = 0;
+        List<Chromosome.Gene> nextIterationQueue = new ArrayList();
+
+         for(Chromosome.Gene gene:genes) {
+             recipeIndex = gene.getRecipeIndex();
+             activityIndex = gene.getActivityIndex();
+             Activity activity = RecipeService.getActivityForRecipe(recipeIndex,activityIndex);
+             if(RecipeService.areAllPreviousActivitiesComplete(recipeIndex,activityIndex)) {
+                 List<Resource> resources = activity.getResourcesNeeded();
+                 Resource resource;
+                 Resource humanResource = null;
+                 if(activity.isHumanNeeded()) {
+                     humanResource = ResourceService.getResource(Constants.HUMAN);
+                     if(ResourceService.checkAvailability(humanResource,1)) {
+                         ResourceService.useResource(humanResource,1);
+                     }  else {
+                         nextIterationQueue.add(gene);
+                         continue;
+                     }
+                 }
+                 boolean isBreak = false;
+                 for(Resource resourceNeeded:resources) {
+                     resource = ResourceService.getResource(resourceNeeded.getResourceName());
+                     if(!ResourceService.checkAvailability(resource,resourceNeeded.getQuantity())) {
+                         isBreak = true;
+                         break;
+                     }
+                 }
+
+                 if(isBreak) {
+                     nextIterationQueue.add(gene);
+                 }
+
+                 for(Resource resourceNeeded:resources) {
+
+                     resource = ResourceService.getResource(resourceNeeded.getResourceName());
+                     ResourceService.useResource(resource,resourceNeeded.getQuantity());
+
+                 }
+                 totalTimeUnits+=activity.getTimeUnitsNeeded().getTimeUnits();
+                 activity.setActivityComplete(true);
+             } else {
+                 nextIterationQueue.add(gene);
+             }
+
+         }
+
+         ResourceService.resetResourceQuantities();
+         if(nextIterationQueue.isEmpty()) {
+             return totalTimeUnits;
+         }
+        return totalTimeUnits+Constants.PENALTY_FOR_ITERATION+calculateFitness(nextIterationQueue);
+    }
+
     private double evaluate(Chromosome p) {
         // We will evaluate based on 2 criteria:
         // 1. Wait time - this is the amount of time when within 1 recipe, 
@@ -51,6 +170,8 @@ public class GeneticAlgorithm {
         // we return 1 divided by the weighted values to get a value between 0 and 1; closer to 1 is better
         return 1.0 / ((1.0 * wait_time) + (1.0 * total_time));
     }
+
+
 
     public void repeat() {
 
