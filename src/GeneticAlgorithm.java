@@ -190,15 +190,15 @@ public class GeneticAlgorithm {
          for(Chromosome.Gene gene:genes) {
              recipeIndex = gene.getRecipeIndex();
              activityIndex = gene.getActivityIndex();
-             Activity activity = RecipeService.getActivityForRecipe(recipeIndex,activityIndex);
-             if(RecipeService.areAllPreviousActivitiesComplete(recipeIndex,activityIndex)) {
+             Activity activity = RecipeService.getActivityForRecipe(recipeIndex, activityIndex);
+             if(RecipeService.areAllPreviousActivitiesComplete(recipeIndex, activityIndex)) {
                  List<Resource> resources = activity.getResourcesNeeded();
                  Resource resource;
                  Resource humanResource = null;
                  if(activity.isHumanNeeded()) {
                      humanResource = ResourceService.getResource(Constants.HUMAN);
-                     if(ResourceService.checkAvailability(humanResource,1)) {
-                         ResourceService.useResource(humanResource,1);
+                     if(ResourceService.checkAvailability(humanResource, 1)) {
+                         ResourceService.useResource(humanResource, 1, activity.getTimeUnitsNeeded());
                      }  else {
                          nextIterationQueue.add(gene);
                          continue;
@@ -207,7 +207,7 @@ public class GeneticAlgorithm {
                  boolean isBreak = false;
                  for(Resource resourceNeeded:resources) {
                      resource = ResourceService.getResource(resourceNeeded.getResourceName());
-                     if(!ResourceService.checkAvailability(resource,resourceNeeded.getQuantity())) {
+                     if(!ResourceService.checkAvailability(resource, resourceNeeded.getQuantity())) {
                          isBreak = true;
                          break;
                      }
@@ -221,10 +221,10 @@ public class GeneticAlgorithm {
                  for(Resource resourceNeeded:resources) {
 
                      resource = ResourceService.getResource(resourceNeeded.getResourceName());
-                     ResourceService.useResource(resource,resourceNeeded.getQuantity());
+                     ResourceService.useResource(resource, resourceNeeded.getQuantity());
 
                  }
-                 totalTimeUnits+=activity.getTimeUnitsNeeded().getTimeUnits();
+                 totalTimeUnits += activity.getTimeUnitsNeeded().getTimeUnits();
                  activity.setActivityComplete(true);
              } else {
                  nextIterationQueue.add(gene);
@@ -236,7 +236,7 @@ public class GeneticAlgorithm {
          if(nextIterationQueue.isEmpty()) {
              return totalTimeUnits;
          }
-        return totalTimeUnits+Constants.PENALTY_FOR_ITERATION+calculateFitness(nextIterationQueue);
+        return totalTimeUnits + Constants.PENALTY_FOR_ITERATION + calculateFitness(nextIterationQueue);
     }
 
     private double evaluate(Chromosome p) {
