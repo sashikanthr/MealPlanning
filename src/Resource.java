@@ -4,6 +4,8 @@ public class Resource {
 
     private String resourceName;
     private int quantity;
+    private boolean available;
+    private int timeAvailable;
 
     public void setAvailable(boolean available) {
         this.available = available;
@@ -42,15 +44,16 @@ public class Resource {
         return available;
     }
     
-    public boolean use(int quantity) {
+    public boolean use(int quantity, int duration) {
 
-        if(available) {
+        if (available) {
 
-            if(this.quantity>=quantity) {
-                this.quantity-=quantity;
-                if(this.quantity==0) {
+            if (this.quantity >= quantity) {
+                this.quantity -= quantity;
+                if (this.quantity == 0) {
                     available = false;
                 }
+                this.timeAvailable += duration;
                 return true;
             }
 
@@ -73,6 +76,10 @@ public class Resource {
             }
         }
         return false;
+    }
+    
+    public int getTimeAvailable() {
+        return timeAvailable;
     }
 
     @Override
