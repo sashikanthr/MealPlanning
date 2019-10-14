@@ -149,4 +149,8 @@ public class RecipeService {
 
         return timeUnitsNeeded;
     }
+
+    public static Recipe getRecipe(int recipeIndex) {
+        return recipes.get(recipeIndex);
+    }
 }

@@ -22,20 +22,42 @@ public class MealPlanning {
             resourceLocation = args[1];
         }
         List<Recipe> recipes = RecipeService.loadRecipes(recipeLocation);
+        System.out.println("Recipes Loaded..."+recipes.size());
         List<Resource> availableResources = ResourceService.loadResources(resourceLocation);
+        System.out.println("Resources Loaded..."+availableResources.size());
        // ResourceService.printResources();
         getBestOrder(recipes);
         System.out.println(RecipeService.getTotalTimeUnitsNeededForAllActivities());
     }
 
     private static void getBestOrder(List<Recipe> allRecipes) {
-
+        System.out.println("Starting the Genetic Algorithm to get the best sequence");
         GeneticAlgorithm geneticAlgorithm = new GeneticAlgorithm(allRecipes);
-        List<Chromosome> population = geneticAlgorithm.generateInitialPopulation();
-        geneticAlgorithm.evaluatePopulation();
-        geneticAlgorithm.crossOver();
-        geneticAlgorithm.evaluateOffSpring();
-        geneticAlgorithm.getBestFitnessValue();
+        geneticAlgorithm.generateInitialPopulation();
+        int bestFitnessValue = 715;
+        Chromosome bestChromosome;
+        int tempBestFitness;
+        int maxItrs =0;
+        do {
+            geneticAlgorithm.selection();
+            geneticAlgorithm.evaluatePopulation();
+            geneticAlgorithm.sortPopulation();
+            geneticAlgorithm.crossOver();
+            geneticAlgorithm.mutation();
+            geneticAlgorithm.evaluateOffSpring();
+            geneticAlgorithm.sortOffspring();
+            tempBestFitness = geneticAlgorithm.getBestFitnessValue();
+            System.out.println("Best Fitness Value.."+tempBestFitness);
+            maxItrs++;
+
+        }while(tempBestFitness>bestFitnessValue && maxItrs<Constants.MAX_ITRS);
+        System.out.println("Found the best sequence after iterations:"+maxItrs);
+        System.out.println("Offspring Fitness.."+geneticAlgorithm.getBestOffspringFitness());
+        System.out.println("Parent Fitness.."+geneticAlgorithm.getBestParentFitness());
+
+        System.out.println("Best Genes.."+geneticAlgorithm.getBest().getGenes());
+        geneticAlgorithm.printStepsToFollow(geneticAlgorithm.getBest().getGenes());
+
 
     }
 

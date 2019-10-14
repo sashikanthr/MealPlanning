@@ -1,4 +1,6 @@
+import java.sql.SQLOutput;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class GeneticAlgorithm {
 
@@ -11,6 +13,34 @@ public class GeneticAlgorithm {
     Map<Chromosome,Integer> fitnessPopulation = new HashMap<>();
 
     Map<Chromosome,Integer> fitnessOffspring = new HashMap<>();
+
+    private int iterationCounter = 1;
+
+    private Chromosome bestOffSpring;
+
+    private Chromosome bestParent;
+
+    private Chromosome best;
+
+    public Chromosome getBestOffSpring() {
+        return bestOffSpring;
+    }
+
+    public Chromosome getBestParent() {
+        return bestParent;
+    }
+
+    public int getBestOffspringFitness() {
+        return bestOffspringFitness;
+    }
+
+    public int getBestParentFitness() {
+        return bestParentFitness;
+    }
+
+    private int bestOffspringFitness = Integer.MAX_VALUE;
+
+    private int bestParentFitness = Integer.MAX_VALUE;
 
      public GeneticAlgorithm(List<Recipe> recipes) {
 
@@ -33,6 +63,8 @@ public class GeneticAlgorithm {
 
     public void evaluatePopulation() {
 
+         fitnessPopulation = new HashMap<>();
+
         for(Chromosome chromosome: population) {
 
             fitnessPopulation.put(chromosome,calculateFitness(chromosome.getGenes()));
@@ -42,42 +74,93 @@ public class GeneticAlgorithm {
 
     }
 
+    public void printPopulation() {
+
+        for(Chromosome chromosome:population) {
+
+            System.out.println(chromosome.getGenes());
+        }
+    }
+
+    public void printOffspring() {
+        for(Chromosome chromosome:offSpring) {
+
+            System.out.println(chromosome.getGenes());
+        }
+
+    }
+
+    public void sortPopulation(){
+        fitnessPopulation =  sortPopulation(fitnessPopulation);
+        population = fitnessPopulation.keySet().stream().collect(Collectors.toList());
+
+    }
+
+    public void sortOffspring() {
+       fitnessOffspring =  sortPopulation(fitnessOffspring);
+        offSpring = fitnessOffspring.keySet().stream().collect(Collectors.toList());
+    }
+
+    public LinkedHashMap<Chromosome, Integer> sortPopulation(Map<Chromosome,Integer> fitnessMapPopulation) {
+
+        return fitnessMapPopulation.entrySet()
+                .stream()
+                .sorted((e1, e2) -> e1.getValue().compareTo(e2.getValue()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+
+    }
+
+    public void selection() {
+
+         if(!fitnessOffspring.isEmpty()) {
+            int j=0;
+
+            for(int i=Constants.NUMBER_OF_CHROMOSOMES/2;i<Constants.NUMBER_OF_CHROMOSOMES;i++) {
+
+                population.set(i,offSpring.get(j));
+                j++;
+            }
+         }
+
+    }
+
     public int getBestFitnessValue() {
 
-         int bestFitness = Integer.MAX_VALUE;
-         Chromosome bestChromosome = null;
-         System.out.println("Processing parents..");
+
         for (Map.Entry<Chromosome, Integer> entry : fitnessPopulation.entrySet()) {
 
-            if(entry.getValue()<bestFitness) {
-                bestFitness = entry.getValue();
-                bestChromosome = entry.getKey();
+            if(entry.getValue()<bestParentFitness) {
+                bestParentFitness = entry.getValue();
+                bestParent = entry.getKey();
             }
 
         }
-        System.out.println("Best Chromosome.."+bestChromosome.getGenes()+" with fitness value.."+bestFitness);
 
-        int bestFitnessOffspring = Integer.MAX_VALUE;
-        Chromosome bestChromosomeOffspring = null;
-        System.out.println("Processing offspring..");
         for (Map.Entry<Chromosome, Integer> entry : fitnessOffspring.entrySet()) {
 
-            if(entry.getValue()<bestFitnessOffspring) {
-                bestFitnessOffspring = entry.getValue();
-                bestChromosomeOffspring = entry.getKey();
+            if(entry.getValue()<bestOffspringFitness) {
+                bestOffspringFitness = entry.getValue();
+                bestOffSpring = entry.getKey();
             }
 
         }
 
-        System.out.println("Best Chromosome.."+bestChromosomeOffspring.getGenes()+" with fitness value.."+bestFitnessOffspring);
-        if(bestFitnessOffspring<bestFitness) {
-            return bestFitnessOffspring;
+
+        if(bestOffspringFitness<bestParentFitness) {
+            best = bestOffSpring;
+            return bestOffspringFitness;
         }
-         return bestFitness;
+        best = bestParent;
+         return bestParentFitness;
+    }
+
+    public Chromosome getBest() {
+         return best;
+
     }
 
     public void evaluateOffSpring() {
-
+        fitnessOffspring = new HashMap<>();
         for(Chromosome chromosome: offSpring) {
 
             fitnessOffspring.put(chromosome,calculateFitness(chromosome.getGenes()));
@@ -132,6 +215,7 @@ public class GeneticAlgorithm {
 
                  if(isBreak) {
                      nextIterationQueue.add(gene);
+                     continue;
                  }
 
                  for(Resource resourceNeeded:resources) {
@@ -171,25 +255,12 @@ public class GeneticAlgorithm {
         return 1.0 / ((1.0 * wait_time) + (1.0 * total_time));
     }
 
-
-
-    public void repeat() {
-
-        while(true) { //stopping criteria not satisfied
-
-            crossOver();
-            mutate();
-            evaluatePopulation();;
-        }
-
-    }
-
     public void crossOver() {
 
          /*Implement a 2 point crossover using PMX (Partially Mapped Crossover)
          We will maintain 2 indices i and j. i will select the parent forward and j will select the parent backward.
           */
-
+        offSpring = new ArrayList<>();
          int i=0;
          int j=Constants.NUMBER_OF_CHROMOSOMES-1;
 
@@ -208,8 +279,33 @@ public class GeneticAlgorithm {
             j--;
 
         }
-        System.out.println("Population.."+population.size());
-        System.out.println("Offspring..."+offSpring.size());
+
+    }
+
+    /*
+    We will perform the mutation by processing the first half of the fittest parent and generating a random value.
+    If the random value is > some value (0.7 in this case), we will interchange the positions of the genes based on
+    a random integer.
+     */
+
+    public void mutation() {
+
+        Random random = new Random();
+        for(int i=0;i<Constants.NUMBER_OF_CHROMOSOMES/2;i++) {
+
+            if(Math.random()>0.7) {
+                List<Chromosome.Gene> genes = population.get(i).getGenes();
+                for(int counter = 0;counter<3;counter++) {
+                    int position1 = random.nextInt(genes.size());
+                    int position2 = random.nextInt(genes.size());
+                    Chromosome.Gene geneAtPosition1 = genes.get(position1);
+                    Chromosome.Gene geneAtPosition2 = genes.get(position2);
+                    genes.set(position2,geneAtPosition1);
+                    genes.set(position1,geneAtPosition2);
+                }
+
+            }
+        }
 
     }
 
@@ -272,11 +368,6 @@ public class GeneticAlgorithm {
 
     }
 
-    public void mutate() {
-
-
-    }
-
     private void setGenes(Chromosome offSpring1, Chromosome offSpring2, Chromosome parent1, Chromosome parent2,Map<Chromosome.Gene,Chromosome.Gene> crossoverMap,int pointer) {
 
         Chromosome.Gene uniqueParentGene;
@@ -309,4 +400,68 @@ public class GeneticAlgorithm {
 
     }
 
-}
+
+    public int printStepsToFollow(List<Chromosome.Gene> genes) {
+        System.out.println("Acctivities to perform during iteration..."+iterationCounter);
+            int recipeIndex;
+            int activityIndex;
+            int totalTimeUnits = 0;
+            List<Chromosome.Gene> nextIterationQueue = new ArrayList();
+
+            for(Chromosome.Gene gene:genes) {
+                recipeIndex = gene.getRecipeIndex();
+                activityIndex = gene.getActivityIndex();
+                Activity activity = RecipeService.getActivityForRecipe(recipeIndex,activityIndex);
+                if(RecipeService.areAllPreviousActivitiesComplete(recipeIndex,activityIndex)) {
+                    List<Resource> resources = activity.getResourcesNeeded();
+                    Resource resource;
+                    Resource humanResource = null;
+                    if(activity.isHumanNeeded()) {
+                        humanResource = ResourceService.getResource(Constants.HUMAN);
+                        if(ResourceService.checkAvailability(humanResource,1)) {
+                            ResourceService.useResource(humanResource,1);
+                        }  else {
+                            nextIterationQueue.add(gene);
+                            continue;
+                        }
+                    }
+                    boolean isBreak = false;
+                    for(Resource resourceNeeded:resources) {
+                        resource = ResourceService.getResource(resourceNeeded.getResourceName());
+                        if(!ResourceService.checkAvailability(resource,resourceNeeded.getQuantity())) {
+                            isBreak = true;
+                            break;
+                        }
+                    }
+
+                    if(isBreak) {
+                        nextIterationQueue.add(gene);
+                        continue;
+                    }
+
+                    for(Resource resourceNeeded:resources) {
+
+                        resource = ResourceService.getResource(resourceNeeded.getResourceName());
+                        ResourceService.useResource(resource,resourceNeeded.getQuantity());
+
+                    }
+                    totalTimeUnits+=activity.getTimeUnitsNeeded().getTimeUnits();
+                    activity.setActivityComplete(true);
+                    Recipe recipe = RecipeService.getRecipe(recipeIndex);
+                    System.out.println(recipe.getName()+"|"+activity.getAction());
+                } else {
+                    nextIterationQueue.add(gene);
+                }
+
+            }
+
+            ResourceService.resetResourceQuantities();
+            iterationCounter++;
+            if(nextIterationQueue.isEmpty()) {
+                return totalTimeUnits;
+            }
+            return totalTimeUnits+Constants.PENALTY_FOR_ITERATION+printStepsToFollow(nextIterationQueue);
+        }
+    }
+
+

@@ -15,4 +15,6 @@ public class Constants {
     public static final String HUMAN = "HUMAN";
 
     public static final int PENALTY_FOR_ITERATION = 10;
+
+    public static final int MAX_ITRS = 50;
 }
