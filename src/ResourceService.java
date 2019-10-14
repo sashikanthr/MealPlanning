@@ -37,7 +37,20 @@ public class ResourceService {
         Predicate<Resource> findResource = resource -> resourceName.equalsIgnoreCase(resource.getResourceName());
         Optional<Resource> resourceOptional = resourceList.stream().filter(findResource).findFirst();
         if(resourceOptional.isPresent()) {
-            return resourceOptional.get();
+            Resource resource = resourceOptional.get();
+            if (resource.resourceName.equals(Constants.HUMAN)) {
+                // find the human resource with the shortest work queue
+                int shortest_queue = Integer.MAX_VALUE;
+                Resource chosen = null;
+                for (Resource r : resourceList) {
+                    if (r.resourceName.equals(Constants.HUMAN) && r.getTimeAvailable() < shortest_queue) {
+                        shortest_queue = r.getTimeAvailable();
+                        chosen = r;
+                    }
+                }
+                return chosen;
+            }
+            return resource;
         } else {
             throw new RuntimeException("Resource not found with name.."+resourceName);
         }
@@ -49,8 +62,8 @@ public class ResourceService {
     }
 
     //Returns true if resource is allocated for the required quantity else returns false.
-    public static boolean useResource(Resource resource,int quantity) {
-        return resource.use(quantity);
+    public static boolean useResource(Resource resource,int quantity, TimeUnits duration) {
+        return resource.use(quantity, duration.getTimeUnits());
     }
 
     //Adds quantity to the resource with the released amount.
