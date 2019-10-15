@@ -12,7 +12,6 @@ public class ResourceService {
 
     private static List<Resource> resourceList;
 
-
     public static List<Resource> loadResources(String resourceLocation) {
         resourceList = new ArrayList<>();
         try (Stream<String> stream = Files.lines(Paths.get(resourceLocation))) {
@@ -86,5 +85,7 @@ public class ResourceService {
         };
         resourceList.forEach(resetQuantity);
     }
-
+    
+    public static List<Resource> getResourceList() {
+        return resourceList;
   }
