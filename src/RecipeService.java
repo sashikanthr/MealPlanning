@@ -162,6 +162,14 @@ public class RecipeService {
 
         return timeUnitsNeeded;
     }
+    
+    public static int getTimeUnitsForActivitySet(List<Activity> activities) {
+        int timeUnitsNeeded = 0;
+        
+        for (Activity activity : activities) {
+            timeUnitsNeeded += activity.getTimeUnitsNeeded().getTimeUnits();
+        }
+    }
 
     public static Recipe getRecipe(int recipeIndex) {
         return recipes.get(recipeIndex);
