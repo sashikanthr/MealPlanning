@@ -11,8 +11,6 @@ public class Resource {
         this.available = available;
     }
 
-    private boolean available;
-
     public int getOriginalQuantity() {
         return originalQuantity;
     }

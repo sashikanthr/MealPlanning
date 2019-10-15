@@ -160,7 +160,7 @@ public class GeneticAlgorithm {
             // then we pick human resource based on smallest gap between time they become available and the calculated start time
             // because there's no reason to pick a human with a shorter queue if the task won't be ready yet!
             // step 1: calculate max time to finish preconditions:
-            int max_time = RecipeService.getTimeUnitsForActivitySet(RecipeService.getPreviousActivities(activity));
+            int max_time = RecipeService.getTimeUnitsForActivitySet(RecipeService.getPreviousActivities(recipeIndex, activityIndex));
             // step 2: find the minimum human resource queue time
             int min_queue_time = 0;
             Resource humanResource = null;
@@ -187,9 +187,9 @@ public class GeneticAlgorithm {
             }
             // then we need to handle all the other needed resources...
             
-  //           if (RecipeService.areAllPreviousActivitiesComplete(recipeIndex, activityIndex)) {
- //                List<Resource> resources = activity.getResourcesNeeded();
- ///                Resource resource;
+            if (RecipeService.areAllPreviousActivitiesComplete(recipeIndex, activityIndex)) {
+                List<Resource> resources = activity.getResourcesNeeded();
+                Resource resource;
  //                Resource humanResource = null;
  //                if (activity.isHumanNeeded()) {
                      // when we are picking a human, we want to see the preconditions for the activity
@@ -207,35 +207,35 @@ public class GeneticAlgorithm {
           //               continue;
     //                 }
     //            }
-                 boolean isBreak = false;
-                 for (Resource resourceNeeded:resources) {
-                     resource = ResourceService.getResource(resourceNeeded.getResourceName());
-                     if (!ResourceService.checkAvailability(resource, resourceNeeded.getQuantity())) {
-                         isBreak = true;
-                         break;
-                     }
-                 }
+                boolean isBreak = false;
+                for (Resource resourceNeeded: resources) {
+                    resource = ResourceService.getResource(resourceNeeded.getResourceName());
+                    if (!ResourceService.checkAvailability(resource, resourceNeeded.getQuantity())) {
+                        isBreak = true;
+                        break;
+                    }
+                }
 
-                 if (isBreak) {
-                     nextIterationQueue.add(gene);
-                     continue;
-                 }
+                if (isBreak) {
+                    nextIterationQueue.add(gene);
+                    continue;
+                }
 
-                 for (Resource resourceNeeded:resources) {
-                     resource = ResourceService.getResource(resourceNeeded.getResourceName());
-                     ResourceService.useResource(resource, resourceNeeded.getQuantity());
-                 }
-                 totalTimeUnits += activity.getTimeUnitsNeeded().getTimeUnits();
-                 activity.setActivityComplete(true);
-             } else {
-                 nextIterationQueue.add(gene);
-             }
-         }
+                for (Resource resourceNeeded:resources) {
+                    resource = ResourceService.getResource(resourceNeeded.getResourceName());
+                    ResourceService.useResource(resource, resourceNeeded.getQuantity(), activity.getTimeUnitsNeeded());
+                }
+                totalTimeUnits += activity.getTimeUnitsNeeded().getTimeUnits();
+                activity.setActivityComplete(true);
+            } else {
+                nextIterationQueue.add(gene);
+            }
+        }
 
-         ResourceService.resetResourceQuantities();
-         if(nextIterationQueue.isEmpty()) {
-             return totalTimeUnits;
-         }
+        ResourceService.resetResourceQuantities();
+        if (nextIterationQueue.isEmpty()) {
+            return totalTimeUnits;
+        }
         
         return totalTimeUnits + Constants.PENALTY_FOR_ITERATION + calculateFitness(nextIterationQueue);
     }
@@ -406,7 +406,7 @@ public class GeneticAlgorithm {
                 if(activity.isHumanNeeded()) {
                    humanResource = ResourceService.getResource(Constants.HUMAN);
                    if(ResourceService.checkAvailability(humanResource,1)) {
-                        ResourceService.useResource(humanResource,1);
+                        ResourceService.useResource(humanResource, 1, activity.getTimeUnitsNeeded());
                     }  else {
                         nextIterationQueue.add(gene);
                         continue;
@@ -429,7 +429,7 @@ public class GeneticAlgorithm {
                     for(Resource resourceNeeded:resources) {
 
                         resource = ResourceService.getResource(resourceNeeded.getResourceName());
-                        ResourceService.useResource(resource,resourceNeeded.getQuantity());
+                        ResourceService.useResource(resource,resourceNeeded.getQuantity(), activity.getTimeUnitsNeeded());
 
                     }
                     totalTimeUnits+=activity.getTimeUnitsNeeded().getTimeUnits();

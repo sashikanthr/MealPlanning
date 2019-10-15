@@ -126,7 +126,7 @@ public class RecipeService {
         return true;
     }
     
-    public static List<Activity> getPreviousActivies (int recipeIndex, int activityIndex) {
+    public static List<Activity> getPreviousActivities (int recipeIndex, int activityIndex) {
         Recipe recipe = recipes.get(recipeIndex);
         Activity activity = getActivityForRecipe(recipeIndex,activityIndex);
         double priority= activity.getPriority();
@@ -169,6 +169,8 @@ public class RecipeService {
         for (Activity activity : activities) {
             timeUnitsNeeded += activity.getTimeUnitsNeeded().getTimeUnits();
         }
+        
+        return timeUnitsNeeded;
     }
 
     public static Recipe getRecipe(int recipeIndex) {
