@@ -125,6 +125,19 @@ public class RecipeService {
 
         return true;
     }
+    
+    public static List<Activity> getPreviousActivies (int recipeIndex, int activityIndex) {
+        Recipe recipe = recipes.get(recipeIndex);
+        Activity activity = getActivityForRecipe(recipeIndex,activityIndex);
+        double priority= activity.getPriority();
+        
+        List<Activity> prev = new ArrayList<>();
+        for(int i = 0; i < activityIndex; i++) {
+            prev.add(recipe.getActivities().get(i));
+        }
+        
+        return prev;
+    }
 
     public static void resetCompleteStatusOnAllActivities() {
 
