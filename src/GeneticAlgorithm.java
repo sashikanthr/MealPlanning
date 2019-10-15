@@ -51,7 +51,6 @@ public class GeneticAlgorithm {
 
 
      public List<Chromosome> generateInitialPopulation() {
-
          population = new ArrayList<>(Constants.NUMBER_OF_CHROMOSOMES);
          int counter=0;
          while(counter<Constants.NUMBER_OF_CHROMOSOMES) {
@@ -62,29 +61,24 @@ public class GeneticAlgorithm {
     }
 
     public void evaluatePopulation() {
-
          fitnessPopulation = new HashMap<>();
 
-        for(Chromosome chromosome: population) {
-
-            fitnessPopulation.put(chromosome,calculateFitness(chromosome.getGenes()));
-            RecipeService.resetCompleteStatusOnAllActivities();
+         for(Chromosome chromosome: population) {
+             fitnessPopulation.put(chromosome,calculateFitness(chromosome.getGenes()));
+             RecipeService.resetCompleteStatusOnAllActivities();
 
         }
 
     }
 
     public void printPopulation() {
-
         for(Chromosome chromosome:population) {
-
             System.out.println(chromosome.getGenes());
         }
     }
 
     public void printOffspring() {
         for(Chromosome chromosome:offSpring) {
-
             System.out.println(chromosome.getGenes());
         }
 
@@ -111,12 +105,10 @@ public class GeneticAlgorithm {
     }
 
     public void selection() {
-
          if(!fitnessOffspring.isEmpty()) {
             int j=0;
 
             for(int i=Constants.NUMBER_OF_CHROMOSOMES/2;i<Constants.NUMBER_OF_CHROMOSOMES;i++) {
-
                 population.set(i,offSpring.get(j));
                 j++;
             }
@@ -125,26 +117,19 @@ public class GeneticAlgorithm {
     }
 
     public int getBestFitnessValue() {
-
-
         for (Map.Entry<Chromosome, Integer> entry : fitnessPopulation.entrySet()) {
-
             if(entry.getValue()<bestParentFitness) {
                 bestParentFitness = entry.getValue();
                 bestParent = entry.getKey();
             }
-
         }
 
         for (Map.Entry<Chromosome, Integer> entry : fitnessOffspring.entrySet()) {
-
             if(entry.getValue()<bestOffspringFitness) {
                 bestOffspringFitness = entry.getValue();
                 bestOffSpring = entry.getKey();
             }
-
         }
-
 
         if(bestOffspringFitness<bestParentFitness) {
             best = bestOffSpring;
@@ -156,18 +141,14 @@ public class GeneticAlgorithm {
 
     public Chromosome getBest() {
          return best;
-
     }
 
     public void evaluateOffSpring() {
         fitnessOffspring = new HashMap<>();
         for(Chromosome chromosome: offSpring) {
-
             fitnessOffspring.put(chromosome,calculateFitness(chromosome.getGenes()));
             RecipeService.resetCompleteStatusOnAllActivities();
-
         }
-
     }
 
     /*
@@ -181,61 +162,64 @@ public class GeneticAlgorithm {
      */
 
     private int calculateFitness(List<Chromosome.Gene> genes) {
-
         int recipeIndex;
         int activityIndex;
         int totalTimeUnits = 0;
         List<Chromosome.Gene> nextIterationQueue = new ArrayList();
 
-         for(Chromosome.Gene gene:genes) {
+         for (Chromosome.Gene gene:genes) {
              recipeIndex = gene.getRecipeIndex();
              activityIndex = gene.getActivityIndex();
              Activity activity = RecipeService.getActivityForRecipe(recipeIndex, activityIndex);
-             if(RecipeService.areAllPreviousActivitiesComplete(recipeIndex, activityIndex)) {
+             if (RecipeService.areAllPreviousActivitiesComplete(recipeIndex, activityIndex)) {
                  List<Resource> resources = activity.getResourcesNeeded();
                  Resource resource;
                  Resource humanResource = null;
-                 if(activity.isHumanNeeded()) {
+                 if (activity.isHumanNeeded()) {
+                     // when we are picking a human, we want to see the preconditions for the activity
+                     // find out the max time needed to finish preconditions
+                     // then start time of this activity is the max of either min queue of humans OR time needed to finish preconditions
+                     // then we pick human resource based on smallest gap between time they become available and the calculated start time
+                     // because there's no reason to pick a human with a shorter queue if the task won't be ready yet!
+                     // step 1: calculate max time to finish preconditions:
                      humanResource = ResourceService.getResource(Constants.HUMAN);
-                     if(ResourceService.checkAvailability(humanResource, 1)) {
+                     if (ResourceService.checkAvailability(humanResource, 1)) {
                          ResourceService.useResource(humanResource, 1, activity.getTimeUnitsNeeded());
-                     }  else {
+                     } else {
                          nextIterationQueue.add(gene);
                          continue;
                      }
                  }
                  boolean isBreak = false;
-                 for(Resource resourceNeeded:resources) {
+                 for (Resource resourceNeeded:resources) {
                      resource = ResourceService.getResource(resourceNeeded.getResourceName());
-                     if(!ResourceService.checkAvailability(resource, resourceNeeded.getQuantity())) {
+                     if (!ResourceService.checkAvailability(resource, resourceNeeded.getQuantity())) {
                          isBreak = true;
                          break;
                      }
                  }
 
-                 if(isBreak) {
+                 if (isBreak) {
                      nextIterationQueue.add(gene);
                      continue;
                  }
 
-                 for(Resource resourceNeeded:resources) {
-
+                 for (Resource resourceNeeded:resources) {
                      resource = ResourceService.getResource(resourceNeeded.getResourceName());
                      ResourceService.useResource(resource, resourceNeeded.getQuantity());
-
                  }
                  totalTimeUnits += activity.getTimeUnitsNeeded().getTimeUnits();
                  activity.setActivityComplete(true);
              } else {
                  nextIterationQueue.add(gene);
              }
-
          }
 
          ResourceService.resetResourceQuantities();
          if(nextIterationQueue.isEmpty()) {
              return totalTimeUnits;
          }
+        
         return totalTimeUnits + Constants.PENALTY_FOR_ITERATION + calculateFitness(nextIterationQueue);
     }
 
