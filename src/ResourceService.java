@@ -37,12 +37,12 @@ public class ResourceService {
         Optional<Resource> resourceOptional = resourceList.stream().filter(findResource).findFirst();
         if(resourceOptional.isPresent()) {
             Resource resource = resourceOptional.get();
-            if (resource.resourceName.equals(Constants.HUMAN)) {
+            if (resource.getResourceName().equals(Constants.HUMAN)) {
                 // find the human resource with the shortest work queue
                 int shortest_queue = Integer.MAX_VALUE;
                 Resource chosen = null;
                 for (Resource r : resourceList) {
-                    if (r.resourceName.equals(Constants.HUMAN) && r.getTimeAvailable() < shortest_queue) {
+                    if (r.getResourceName().equals(Constants.HUMAN) && r.getTimeAvailable() < shortest_queue) {
                         shortest_queue = r.getTimeAvailable();
                         chosen = r;
                     }
@@ -88,4 +88,5 @@ public class ResourceService {
     
     public static List<Resource> getResourceList() {
         return resourceList;
-  }
+    }
+}

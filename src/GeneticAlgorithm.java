@@ -147,97 +147,89 @@ public class GeneticAlgorithm {
         int recipeIndex;
         int activityIndex;
         int totalTimeUnits = 0;
+        int time_waste = 0;
         List<Chromosome.Gene> nextIterationQueue = new ArrayList();
 
         for (Chromosome.Gene gene:genes) {
             recipeIndex = gene.getRecipeIndex();
             activityIndex = gene.getActivityIndex();
             Activity activity = RecipeService.getActivityForRecipe(recipeIndex, activityIndex);
+
+            if (RecipeService.areAllPreviousActivitiesComplete(recipeIndex, activityIndex)) {
+                //retroactively find the best resource configuration
+                // when we are picking a human, we want to see the preconditions for the activity
+                // find out the max time needed to finish preconditions
+                // then start time of this activity is the max of either min queue of humans OR time needed to finish preconditions
+                // then we pick human resource based on smallest gap between time they become available and the calculated start time
+                // because there's no reason to pick a human with a shorter queue if the task won't be ready yet!
+                
+                // step 1: calculate max time to finish preconditions:
+                int max_time = RecipeService.getTimeUnitsForActivitySet(RecipeService.getPreviousActivities(recipeIndex, activityIndex));
+                
+                // step 2: find the minimum human resource queue time
+                int min_queue_time = 0;
+                
+                Resource humanResource = null;
+                if (activity.isHumanNeeded()) {                 
+                    humanResource = ResourceService.getResource(Constants.HUMAN);
+                    min_queue_time = humanResource.getTimeAvailable();
+                }
+                
+                // step 3: find max of these:
+                int start_time = Math.max(max_time, min_queue_time);
+                
+                // step 4: find the human who has the human_time - start_time <= 0 but closest to 0
+                // so i have to search through all the human resources
+                int closest = Integer.MAX_VALUE;
+                Resource chosen = humanResource;
+
+                for (Resource resource : ResourceService.getResourceList()) {
+                    if (resource.getResourceName().equals(Constants.HUMAN)) {
+                        //we have a human - check their queue time
+                        int q = resource.getTimeAvailable();
+                        int diff = q - start_time;
+                        if (Math.abs(0 - diff) < closest) {
+                            closest = Math.abs(0 - diff);
+                            chosen = resource;
+                        }
+                    }
+                    ResourceService.useResource(chosen, 1, activity.getTimeUnitsNeeded());
+                }
+                time_waste += closest;                
             
-            // when we are picking a human, we want to see the preconditions for the activity
-            // find out the max time needed to finish preconditions
-            // then start time of this activity is the max of either min queue of humans OR time needed to finish preconditions
-            // then we pick human resource based on smallest gap between time they become available and the calculated start time
-            // because there's no reason to pick a human with a shorter queue if the task won't be ready yet!
-            // step 1: calculate max time to finish preconditions:
-            int max_time = RecipeService.getTimeUnitsForActivitySet(RecipeService.getPreviousActivities(activity));
-            // step 2: find the minimum human resource queue time
-            int min_queue_time = 0;
-            Resource humanResource = null;
-            if (activity.isHumanNeeded()) {                 
-                humanResource = ResourceService.getResource(Constants.HUMAN);
-                min_queue_time = humanResource.getTimeAvailable();
-            }
-            // step 3: find max of these:
-            int start_time = Math.max(max_time, min_queue_time);
-            // step 4: find the human who has the human_time - start_time <= 0 but closest to 0
-            // so i have to search through all the human resources
-            int closest = Integer.MAX_VALUE;
-            Resource chosen = humanResource;
-            for (Resource resource : ResourceService.getResourceList()) {
-                if (resource.getResourceName().equals(Constants.HUMAN)) {
-                    //we have a human - check their queue time
-                    int q = resource.getTimeAvailable();
-                    int diff = q - start_time;
-                    if (Math.abs(0 - diff) < closest) {
-                        closest = q - start_time;
-                        chosen = resource;
+                List<Resource> resources = activity.getResourcesNeeded();
+                Resource resource;
+
+                boolean isBreak = false;
+                for (Resource resourceNeeded: resources) {
+                    resource = ResourceService.getResource(resourceNeeded.getResourceName());
+                    if (!ResourceService.checkAvailability(resource, resourceNeeded.getQuantity())) {
+                        isBreak = true;
+                        break;
                     }
                 }
+
+                if (isBreak) {
+                    nextIterationQueue.add(gene);
+                    continue;
+                }
+
+                for (Resource resourceNeeded: resources) {
+                    resource = ResourceService.getResource(resourceNeeded.getResourceName());
+                    ResourceService.useResource(resource, resourceNeeded.getQuantity(), activity.getTimeUnitsNeeded());
+                }
+                totalTimeUnits += activity.getTimeUnitsNeeded().getTimeUnits();
+                activity.setActivityComplete(true);
+            } else {
+                nextIterationQueue.add(gene);
             }
-            // then we need to handle all the other needed resources...
-            
-  //           if (RecipeService.areAllPreviousActivitiesComplete(recipeIndex, activityIndex)) {
- //                List<Resource> resources = activity.getResourcesNeeded();
- ///                Resource resource;
- //                Resource humanResource = null;
- //                if (activity.isHumanNeeded()) {
-                     // when we are picking a human, we want to see the preconditions for the activity
-                     // find out the max time needed to finish preconditions
-                     // then start time of this activity is the max of either min queue of humans OR time needed to finish preconditions
-                     // then we pick human resource based on smallest gap between time they become available and the calculated start time
-                     // because there's no reason to pick a human with a shorter queue if the task won't be ready yet!
-                     // step 1: calculate max time to finish preconditions:
-                     
- //                    humanResource = ResourceService.getResource(Constants.HUMAN);
-   //                  if (ResourceService.checkAvailability(humanResource, 1)) {
-    //                     ResourceService.useResource(humanResource, 1, activity.getTimeUnitsNeeded());
-      //               } else {
-        //                 nextIterationQueue.add(gene);
-          //               continue;
-    //                 }
-    //            }
-                 boolean isBreak = false;
-                 for (Resource resourceNeeded:resources) {
-                     resource = ResourceService.getResource(resourceNeeded.getResourceName());
-                     if (!ResourceService.checkAvailability(resource, resourceNeeded.getQuantity())) {
-                         isBreak = true;
-                         break;
-                     }
-                 }
-
-                 if (isBreak) {
-                     nextIterationQueue.add(gene);
-                     continue;
-                 }
-
-                 for (Resource resourceNeeded:resources) {
-                     resource = ResourceService.getResource(resourceNeeded.getResourceName());
-                     ResourceService.useResource(resource, resourceNeeded.getQuantity());
-                 }
-                 totalTimeUnits += activity.getTimeUnitsNeeded().getTimeUnits();
-                 activity.setActivityComplete(true);
-             } else {
-                 nextIterationQueue.add(gene);
-             }
-         }
-
-         ResourceService.resetResourceQuantities();
-         if(nextIterationQueue.isEmpty()) {
-             return totalTimeUnits;
-         }
         
-        return totalTimeUnits + Constants.PENALTY_FOR_ITERATION + calculateFitness(nextIterationQueue);
+            ResourceService.resetResourceQuantities();
+            if (nextIterationQueue.isEmpty()) {
+                return totalTimeUnits;
+            }
+        }
+        return totalTimeUnits + time_waste + Constants.PENALTY_FOR_ITERATION + calculateFitness(nextIterationQueue);
     }
 
    // private double evaluate(Chromosome p) {
@@ -256,11 +248,11 @@ public class GeneticAlgorithm {
      //   return 1.0 / ((1.0 * wait_time) + (1.0 * total_time));
    // }
 
+   /* Implement a 2 point crossover using PMX (Partially Mapped Crossover)
+    * We will maintain 2 indices i and j. i will select the parent forward and 
+    * j will select the parent backward.
+    */    
     public void crossOver() {
-
-         /*Implement a 2 point crossover using PMX (Partially Mapped Crossover)
-         We will maintain 2 indices i and j. i will select the parent forward and j will select the parent backward.
-          */
         offSpring = new ArrayList<>();
          int i = 0;
          int j = Constants.NUMBER_OF_CHROMOSOMES - 1;
@@ -285,7 +277,6 @@ public class GeneticAlgorithm {
     If the random value is > some value (0.7 in this case), we will interchange the positions of the genes based on
     a random integer.
      */
-
     public void mutation() {
         Random random = new Random();
         for(int i = 0; i < Constants.NUMBER_OF_CHROMOSOMES / 2; i++) {
@@ -406,7 +397,7 @@ public class GeneticAlgorithm {
                 if(activity.isHumanNeeded()) {
                    humanResource = ResourceService.getResource(Constants.HUMAN);
                    if(ResourceService.checkAvailability(humanResource,1)) {
-                        ResourceService.useResource(humanResource,1);
+                        ResourceService.useResource(humanResource, 1, activity.getTimeUnitsNeeded());
                     }  else {
                         nextIterationQueue.add(gene);
                         continue;
@@ -429,7 +420,7 @@ public class GeneticAlgorithm {
                     for(Resource resourceNeeded:resources) {
 
                         resource = ResourceService.getResource(resourceNeeded.getResourceName());
-                        ResourceService.useResource(resource,resourceNeeded.getQuantity());
+                        ResourceService.useResource(resource,resourceNeeded.getQuantity(), activity.getTimeUnitsNeeded());
 
                     }
                     totalTimeUnits+=activity.getTimeUnitsNeeded().getTimeUnits();
