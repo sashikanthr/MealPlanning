@@ -126,7 +126,7 @@ public class RecipeService {
         return true;
     }
     
-    public static List<Activity> getPreviousActivies (int recipeIndex, int activityIndex) {
+    public static List<Activity> getPreviousActivities (int recipeIndex, int activityIndex) {
         Recipe recipe = recipes.get(recipeIndex);
         Activity activity = getActivityForRecipe(recipeIndex,activityIndex);
         double priority= activity.getPriority();
@@ -145,6 +145,7 @@ public class RecipeService {
 
             for(Activity activity:recipe.getActivities()) {
                 activity.setActivityComplete(false);
+                activity.setProgress(false);
             }
         }
     }
@@ -169,9 +170,39 @@ public class RecipeService {
         for (Activity activity : activities) {
             timeUnitsNeeded += activity.getTimeUnitsNeeded().getTimeUnits();
         }
+        
+        return timeUnitsNeeded;
+    }
+
+    public static boolean areAllActivitiesComplete(){
+
+        for(Recipe recipe:recipes) {
+            for(Activity activity:recipe.getActivities()) {
+                if(!activity.isActivityComplete()) return false;
+            }
+        }
+
+        return true;
     }
 
     public static Recipe getRecipe(int recipeIndex) {
         return recipes.get(recipeIndex);
+    }
+
+    public static void markRecipesThatAreComplete() {
+
+        for(Recipe recipe:recipes) {
+
+            for(Activity activity:recipe.getActivities()) {
+
+                if(activity.isProgress()) {
+
+                    if(!ResourceService.areThereAnyResourceQueuesHavingThisActivity(activity)) {
+                        activity.setActivityComplete(true);
+                        activity.setProgress(false);
+                    }
+                }
+            }
+        }
     }
 }

@@ -11,6 +11,16 @@ public class Activity {
     List<Resource> resourcesNeeded = new ArrayList<>();
     private TimeUnits timeUnitsNeeded;
 
+    public boolean isProgress() {
+        return isProgress;
+    }
+
+    public void setProgress(boolean progress) {
+        isProgress = progress;
+    }
+
+    private boolean isProgress = false;
+
     public boolean isActivityComplete() {
         return isActivityComplete;
     }

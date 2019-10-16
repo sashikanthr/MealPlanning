@@ -36,33 +36,23 @@ public class ResourceService {
         Predicate<Resource> findResource = resource -> resourceName.equalsIgnoreCase(resource.getResourceName());
         Optional<Resource> resourceOptional = resourceList.stream().filter(findResource).findFirst();
         if(resourceOptional.isPresent()) {
-            Resource resource = resourceOptional.get();
-            if (resource.resourceName.equals(Constants.HUMAN)) {
-                // find the human resource with the shortest work queue
-                int shortest_queue = Integer.MAX_VALUE;
-                Resource chosen = null;
-                for (Resource r : resourceList) {
-                    if (r.resourceName.equals(Constants.HUMAN) && r.getTimeAvailable() < shortest_queue) {
-                        shortest_queue = r.getTimeAvailable();
-                        chosen = r;
-                    }
-                }
-                return chosen;
-            }
-            return resource;
+            return resourceOptional.get();
         } else {
             throw new RuntimeException("Resource not found with name.."+resourceName);
         }
     }
 
     //Returns true if resource is available for the required quantity.
-    public static boolean checkAvailability(Resource resource,int quantity) {
-        return resource.isFree(quantity);
+    public static boolean checkAvailability(String resourceName,int quantityNeeded,int timeUnitsTaken) {
+
+        Resource resource = ResourceService.getResource(resourceName);
+        return resource.isFree(quantityNeeded,timeUnitsTaken);
     }
 
     //Returns true if resource is allocated for the required quantity else returns false.
-    public static boolean useResource(Resource resource,int quantity, TimeUnits duration) {
-        return resource.use(quantity, duration.getTimeUnits());
+    public static boolean useResource(Activity activity,String resourceName,int quantity,int timeUnitsTaken, TimeUnits timeUnitsNeeded) {
+        Resource resource = ResourceService.getResource(resourceName);
+        return resource.use(activity,quantity,timeUnitsTaken,timeUnitsNeeded.getTimeUnits());
     }
 
     //Adds quantity to the resource with the released amount.
@@ -77,15 +67,57 @@ public class ResourceService {
         }
     }
 
-    public static void resetResourceQuantities() {
+    public static void releaseResourceQuantities(int timeUnitsTaken) {
 
         Consumer<? super Resource> resetQuantity = resource -> {
-            resource.setQuantity(resource.getOriginalQuantity());
-            resource.setAvailable(true);
+            resource.release(timeUnitsTaken);
         };
         resourceList.forEach(resetQuantity);
     }
     
     public static List<Resource> getResourceList() {
         return resourceList;
-  }
+    }
+
+    public static boolean areThereAnyResourceQueuesHavingThisActivity(Activity activity) {
+
+        for(Resource resource:resourceList) {
+
+            for(Resource.ResourceQueue resourceQueue:resource.getResourceQueue()) {
+
+                if(activity.equals(resourceQueue.getActivity())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public static boolean isResourceAlreadyAcquired(Activity activity,Resource resourceNeeded) {
+
+        Resource resource = ResourceService.getResource(resourceNeeded.getResourceName());
+            Predicate<Resource.ResourceQueue> findActivity = resourceQueue ->activity.equals(resourceQueue.getActivity());
+            if(resource.getResourceQueue().stream().filter(findActivity).findFirst().isPresent()) {
+                return true;
+            } else {
+                return false;
+            }
+
+    }
+
+    public static boolean verifyIfAllResourcesAreAllocated(Activity activity) {
+
+        for(Resource resourceNeeded:activity.getResourcesNeeded()) {
+            Resource resource = ResourceService.getResource(resourceNeeded.getResourceName());
+            for(Resource.ResourceQueue resourceQueue: resource.getResourceQueue()) {
+
+                if (!resourceQueue.getActivity().equals(activity)) {
+
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+}

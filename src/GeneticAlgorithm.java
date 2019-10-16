@@ -1,5 +1,5 @@
-import java.sql.SQLOutput;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class GeneticAlgorithm {
@@ -134,133 +134,7 @@ public class GeneticAlgorithm {
         }
     }
 
-    /*
-    Here fitness is based on number of iterations. According to the recipes, an activity can be run simultaneously
-    with other activities or it has to wait for the predecessor activities to complete. Also for the activity to be
-    completed, there must be available resources. Here for each iteration, we will execute all the activities that
-    can be completed concurrently. Ones which cannot be completed will be added to a queue which will be processed
-    as part of the next iteration. For each iteration there will be a penalty. And during, one iteration the resources
-    are shared. At the end of the iteration, the resources are released. At the end of all iterations, we get the final
-    value of the fitness. The shortest value is the fittest chromosome.
-     */
-    private int calculateFitness(List<Chromosome.Gene> genes) {
-        int recipeIndex;
-        int activityIndex;
-        int totalTimeUnits = 0;
-        List<Chromosome.Gene> nextIterationQueue = new ArrayList();
-
-        for (Chromosome.Gene gene:genes) {
-            recipeIndex = gene.getRecipeIndex();
-            activityIndex = gene.getActivityIndex();
-            Activity activity = RecipeService.getActivityForRecipe(recipeIndex, activityIndex);
-            
-            // when we are picking a human, we want to see the preconditions for the activity
-            // find out the max time needed to finish preconditions
-            // then start time of this activity is the max of either min queue of humans OR time needed to finish preconditions
-            // then we pick human resource based on smallest gap between time they become available and the calculated start time
-            // because there's no reason to pick a human with a shorter queue if the task won't be ready yet!
-            // step 1: calculate max time to finish preconditions:
-            int max_time = RecipeService.getTimeUnitsForActivitySet(RecipeService.getPreviousActivities(activity));
-            // step 2: find the minimum human resource queue time
-            int min_queue_time = 0;
-            Resource humanResource = null;
-            if (activity.isHumanNeeded()) {                 
-                humanResource = ResourceService.getResource(Constants.HUMAN);
-                min_queue_time = humanResource.getTimeAvailable();
-            }
-            // step 3: find max of these:
-            int start_time = Math.max(max_time, min_queue_time);
-            // step 4: find the human who has the human_time - start_time <= 0 but closest to 0
-            // so i have to search through all the human resources
-            int closest = Integer.MAX_VALUE;
-            Resource chosen = humanResource;
-            for (Resource resource : ResourceService.getResourceList()) {
-                if (resource.getResourceName().equals(Constants.HUMAN)) {
-                    //we have a human - check their queue time
-                    int q = resource.getTimeAvailable();
-                    int diff = q - start_time;
-                    if (Math.abs(0 - diff) < closest) {
-                        closest = q - start_time;
-                        chosen = resource;
-                    }
-                }
-            }
-            // then we need to handle all the other needed resources...
-            
-  //           if (RecipeService.areAllPreviousActivitiesComplete(recipeIndex, activityIndex)) {
- //                List<Resource> resources = activity.getResourcesNeeded();
- ///                Resource resource;
- //                Resource humanResource = null;
- //                if (activity.isHumanNeeded()) {
-                     // when we are picking a human, we want to see the preconditions for the activity
-                     // find out the max time needed to finish preconditions
-                     // then start time of this activity is the max of either min queue of humans OR time needed to finish preconditions
-                     // then we pick human resource based on smallest gap between time they become available and the calculated start time
-                     // because there's no reason to pick a human with a shorter queue if the task won't be ready yet!
-                     // step 1: calculate max time to finish preconditions:
-                     
- //                    humanResource = ResourceService.getResource(Constants.HUMAN);
-   //                  if (ResourceService.checkAvailability(humanResource, 1)) {
-    //                     ResourceService.useResource(humanResource, 1, activity.getTimeUnitsNeeded());
-      //               } else {
-        //                 nextIterationQueue.add(gene);
-          //               continue;
-    //                 }
-    //            }
-                 boolean isBreak = false;
-                 for (Resource resourceNeeded:resources) {
-                     resource = ResourceService.getResource(resourceNeeded.getResourceName());
-                     if (!ResourceService.checkAvailability(resource, resourceNeeded.getQuantity())) {
-                         isBreak = true;
-                         break;
-                     }
-                 }
-
-                 if (isBreak) {
-                     nextIterationQueue.add(gene);
-                     continue;
-                 }
-
-                 for (Resource resourceNeeded:resources) {
-                     resource = ResourceService.getResource(resourceNeeded.getResourceName());
-                     ResourceService.useResource(resource, resourceNeeded.getQuantity());
-                 }
-                 totalTimeUnits += activity.getTimeUnitsNeeded().getTimeUnits();
-                 activity.setActivityComplete(true);
-             } else {
-                 nextIterationQueue.add(gene);
-             }
-         }
-
-         ResourceService.resetResourceQuantities();
-         if(nextIterationQueue.isEmpty()) {
-             return totalTimeUnits;
-         }
-        
-        return totalTimeUnits + Constants.PENALTY_FOR_ITERATION + calculateFitness(nextIterationQueue);
-    }
-
-   // private double evaluate(Chromosome p) {
-        // We will evaluate based on 2 criteria:
-        // 1. Wait time - this is the amount of time when within 1 recipe, 
-        //    step i is complete but we are unable to begin step i + 1 due to 
-        //    resources being unavailable, eg.
-        // 2. Total time - this is the total time spent in the kitchen from start of first step of first recipe,
-        //    to completion of final step of last recipe
-        // we may also need a criteria for time between courses, and to adjust the weights of these based on which we care about most.
-     //   int wait_time = 0;
-        // sum wait times
-     //   int total_time = 0; //end time - start time
-        
-        // we return 1 divided by the weighted values to get a value between 0 and 1; closer to 1 is better
-     //   return 1.0 / ((1.0 * wait_time) + (1.0 * total_time));
-   // }
-
-    public void crossOver() {
-
-         /*Implement a 2 point crossover using PMX (Partially Mapped Crossover)
-         We will maintain 2 indices i and j. i will select the parent forward and j will select the parent backward.
-          */
+   public void crossOver() {
         offSpring = new ArrayList<>();
          int i = 0;
          int j = Constants.NUMBER_OF_CHROMOSOMES - 1;
@@ -285,7 +159,6 @@ public class GeneticAlgorithm {
     If the random value is > some value (0.7 in this case), we will interchange the positions of the genes based on
     a random integer.
      */
-
     public void mutation() {
         Random random = new Random();
         for(int i = 0; i < Constants.NUMBER_OF_CHROMOSOMES / 2; i++) {
@@ -388,67 +261,96 @@ public class GeneticAlgorithm {
          return parentGene;
     }
 
-    public int printStepsToFollow(List<Chromosome.Gene> genes) {
-        System.out.println("Activities to perform during iteration..." + iterationCounter);
-        int recipeIndex;
-        int activityIndex;
-        int totalTimeUnits = 0;
-        List<Chromosome.Gene> nextIterationQueue = new ArrayList();
+        public int calculateFitness(List<Chromosome.Gene> genes)  {
 
-        for(Chromosome.Gene gene:genes) {
-            recipeIndex = gene.getRecipeIndex();
-            activityIndex = gene.getActivityIndex();
-            Activity activity = RecipeService.getActivityForRecipe(recipeIndex,activityIndex);
-            if(RecipeService.areAllPreviousActivitiesComplete(recipeIndex,activityIndex)) {
-                List<Resource> resources = activity.getResourcesNeeded();
-                Resource resource;
-                Resource humanResource = null;
-                if(activity.isHumanNeeded()) {
-                   humanResource = ResourceService.getResource(Constants.HUMAN);
-                   if(ResourceService.checkAvailability(humanResource,1)) {
-                        ResourceService.useResource(humanResource,1);
-                    }  else {
-                        nextIterationQueue.add(gene);
+        int timeUnitsTaken = 0;
+        boolean isLoopBroken = false;
+
+        List<Chromosome.Gene> copyOfGenes = new ArrayList<>(genes);
+
+        while(!isLoopBroken) {
+
+            for(Chromosome.Gene gene:copyOfGenes) {
+
+                Activity activity = RecipeService.getActivityForRecipe(gene.getRecipeIndex(),gene.getActivityIndex());
+                if(!activity.isProgress() && RecipeService.areAllPreviousActivitiesComplete(gene.getRecipeIndex(),gene.getActivityIndex())) {
+
+                    if(activity.isHumanNeeded()) {
+                        if(ResourceService.checkAvailability(Constants.HUMAN,1,timeUnitsTaken)) {
+                            ResourceService.useResource(activity,Constants.HUMAN, 1, timeUnitsTaken, activity.getTimeUnitsNeeded());
+                        } else {
+                            timeUnitsTaken++;
+                            verifyIfAnyResourcesCanBeReleased(timeUnitsTaken);
+                            isLoopBroken = areAllActivitiesComplete();
+                            if(isLoopBroken) break; else
+                            continue;
+                        }
+                    }
+                    boolean areAllResourcesAllocated = true;
+                    for(Resource resourceNeeded:activity.getResourcesNeeded()) {
+
+                        if(!ResourceService.checkAvailability(resourceNeeded.getResourceName(),resourceNeeded.getQuantity(),timeUnitsTaken)) {
+                            areAllResourcesAllocated = false;
+                            continue;
+                        }
+
+                    }
+
+                    if(!areAllResourcesAllocated) {
+                        timeUnitsTaken++;
+                        verifyIfAnyResourcesCanBeReleased(timeUnitsTaken);
+                        markActivitiesThatAreComplete();
                         continue;
+                    } else {
+                        for(Resource resourceNeeded:activity.getResourcesNeeded()) {
+                            ResourceService.useResource(activity,resourceNeeded.getResourceName(), resourceNeeded.getQuantity(), timeUnitsTaken, activity.getTimeUnitsNeeded());
+                        }
+                        activity.setProgress(true);
                     }
-               }
-               boolean isBreak = false;
-               for(Resource resourceNeeded:resources) {
-                    resource = ResourceService.getResource(resourceNeeded.getResourceName());
-                   if(!ResourceService.checkAvailability(resource,resourceNeeded.getQuantity())) {
-                        isBreak = true;
-                        break;
-                    }
+
                 }
-
-                    if(isBreak) {
-                        nextIterationQueue.add(gene);
-                        continue;
-                    }
-
-                    for(Resource resourceNeeded:resources) {
-
-                        resource = ResourceService.getResource(resourceNeeded.getResourceName());
-                        ResourceService.useResource(resource,resourceNeeded.getQuantity());
-
-                    }
-                    totalTimeUnits+=activity.getTimeUnitsNeeded().getTimeUnits();
-                    activity.setActivityComplete(true);
-                    Recipe recipe = RecipeService.getRecipe(recipeIndex);
-                    System.out.println(recipe.getName()+"|"+activity.getAction());
-                } else {
-                    nextIterationQueue.add(gene);
-                }
+                timeUnitsTaken++;
+                verifyIfAnyResourcesCanBeReleased(timeUnitsTaken);
+                markActivitiesThatAreComplete();
 
             }
-
-            ResourceService.resetResourceQuantities();
-            iterationCounter++;
-            if(nextIterationQueue.isEmpty()) {
-                return totalTimeUnits;
+            markActivitiesThatAreComplete();
+            verifyIfAnyResourcesCanBeReleased(timeUnitsTaken);
+            isLoopBroken = areAllActivitiesComplete();
+            if(isLoopBroken) {
+                break;
             }
-            return totalTimeUnits+Constants.PENALTY_FOR_ITERATION+printStepsToFollow(nextIterationQueue);
+            cleanUpActivitiesThatAreComplete(copyOfGenes);
+
         }
+
+        return timeUnitsTaken;
     }
+
+    private void markActivitiesThatAreComplete() {
+
+        RecipeService.markRecipesThatAreComplete();
+
+    }
+
+    private void cleanUpActivitiesThatAreComplete(List<Chromosome.Gene> copyOfGenes) {
+        Predicate<Chromosome.Gene> filterCompletedOnes = gene -> {
+            return RecipeService.getActivityForRecipe(gene.getRecipeIndex(),gene.getActivityIndex()).isActivityComplete();
+        };
+        copyOfGenes.removeIf(filterCompletedOnes);
+
+    }
+
+    private boolean areAllActivitiesComplete() {
+
+        return RecipeService.areAllActivitiesComplete();
+
+    }
+
+
+    private void verifyIfAnyResourcesCanBeReleased(int timeUnitsTaken) {
+        ResourceService.releaseResourceQuantities(timeUnitsTaken);
+    }
+}
 
 

@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class Resource {
@@ -5,14 +7,16 @@ public class Resource {
     private String resourceName;
     private int quantity;
     private boolean available;
-    private int timeAvailable;
+
+    public List<ResourceQueue> getResourceQueue() {
+        return resourceQueue;
+    }
+
+    List<ResourceQueue> resourceQueue = new ArrayList<>();
 
     public void setAvailable(boolean available) {
         this.available = available;
     }
-
-    private boolean available;
-
     public int getOriginalQuantity() {
         return originalQuantity;
     }
@@ -44,42 +48,72 @@ public class Resource {
         return available;
     }
     
-    public boolean use(int quantity, int duration) {
+    public boolean use(Activity activity, int quantity,int timeUnitCounterItIsLockedAt, int timeUnitsNeeded) {
 
-        if (available) {
+        if (this.quantity >= quantity) {
 
-            if (this.quantity >= quantity) {
-                this.quantity -= quantity;
-                if (this.quantity == 0) {
-                    available = false;
+            ResourceQueue resource = new ResourceQueue();
+            resource.setQuantityAcquired(quantity);
+            resource.setTimeUnitCounterItIsLockedAt(timeUnitCounterItIsLockedAt);
+            resource.setTimeUnitsNeeded(timeUnitsNeeded);
+            resource.setActivity(activity);
+            resourceQueue.add(resource);
+            this.quantity -= quantity;
+            return true;
+        } else {
+            throw new RuntimeException("Resource Not Available");
+        }
+    }
+
+
+
+    public void release(int timeUnitsTaken) {
+
+        if(!resourceQueue.isEmpty()) {
+            List<ResourceQueue> resourcesToBeRemovedFromQueue = new ArrayList<>();
+            for(ResourceQueue resource:resourceQueue) {
+
+                if(timeUnitsTaken-resource.timeUnitCounterItIsLockedAt>=resource.timeUnitsNeeded) {
+                    this.quantity+=resource.getQuantityAcquired();
+                    resourcesToBeRemovedFromQueue.add(resource);
                 }
-                this.timeAvailable += duration;
+            }
+            if(!resourcesToBeRemovedFromQueue.isEmpty()) {
+                for(ResourceQueue resource:resourcesToBeRemovedFromQueue) {
+                    resourceQueue.remove(resource);
+                }
+            }
+        }
+    }
+    
+    public boolean isFree(int quantityNeeded, int timeUnitsTaken) {
+
+          if(this.quantity>=quantityNeeded) {
                 return true;
             }
 
+          if(!resourceQueue.isEmpty()) {
+              List<ResourceQueue> resourcesToBeRemovedFromQueue = new ArrayList<>();
+              for(ResourceQueue resource:resourceQueue) {
+
+                  if(timeUnitsTaken-resource.timeUnitCounterItIsLockedAt>=resource.timeUnitsNeeded) {
+                      this.quantity+=resource.getQuantityAcquired();
+                      resourcesToBeRemovedFromQueue.add(resource);
+                  }
+              }
+              if(!resourcesToBeRemovedFromQueue.isEmpty()) {
+                  for(ResourceQueue resource:resourcesToBeRemovedFromQueue) {
+                      resourceQueue.remove(resource);
+                  }
+              }
+          }
+
+        if(this.quantity>=quantityNeeded) {
+            return true;
         }
+
+
         return false;
-    }
-
-    public void release(int quantity) {
-
-        this.quantity+=quantity;
-        available = true;
-    }
-    
-    public boolean isFree(int quantity) {
-
-        if(available) {
-
-            if (this.quantity >= quantity) {
-                return true;
-            }
-        }
-        return false;
-    }
-    
-    public int getTimeAvailable() {
-        return timeAvailable;
     }
 
     @Override
@@ -101,5 +135,50 @@ public class Resource {
     @Override
     public int hashCode() {
         return Objects.hash(resourceName);
+    }
+
+
+
+    class ResourceQueue {
+
+        public int getQuantityAcquired() {
+            return quantityAcquired;
+        }
+
+        public void setQuantityAcquired(int quantityAcquired) {
+            this.quantityAcquired = quantityAcquired;
+        }
+
+        public int getTimeUnitCounterItIsLockedAt() {
+            return timeUnitCounterItIsLockedAt;
+        }
+
+        public void setTimeUnitCounterItIsLockedAt(int timeUnitCounterItIsLockedAt) {
+            this.timeUnitCounterItIsLockedAt = timeUnitCounterItIsLockedAt;
+        }
+
+        public int getTimeUnitsNeeded() {
+            return timeUnitsNeeded;
+        }
+
+        public void setTimeUnitsNeeded(int timeUnitsNeeded) {
+            this.timeUnitsNeeded = timeUnitsNeeded;
+        }
+
+        private int quantityAcquired;
+
+        private int timeUnitCounterItIsLockedAt;
+
+        private int timeUnitsNeeded;
+
+        public Activity getActivity() {
+            return activity;
+        }
+
+        public void setActivity(Activity activity) {
+            this.activity = activity;
+        }
+
+        private Activity activity;
     }
 }

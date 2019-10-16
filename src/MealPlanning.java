@@ -1,4 +1,4 @@
-import com.sun.xml.internal.ws.util.StringUtils;
+//import com.sun.xml.internal.ws.util.StringUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -50,13 +50,12 @@ public class MealPlanning {
             System.out.println("Best Fitness Value.."+tempBestFitness);
             maxItrs++;
 
-        }while(tempBestFitness>bestFitnessValue && maxItrs<Constants.MAX_ITRS);
+        }while(maxItrs<Constants.MAX_ITRS);
         System.out.println("Found the best sequence after iterations:"+maxItrs);
         System.out.println("Offspring Fitness.."+geneticAlgorithm.getBestOffspringFitness());
         System.out.println("Parent Fitness.."+geneticAlgorithm.getBestParentFitness());
 
         System.out.println("Best Genes.."+geneticAlgorithm.getBest().getGenes());
-        geneticAlgorithm.printStepsToFollow(geneticAlgorithm.getBest().getGenes());
 
 
     }
