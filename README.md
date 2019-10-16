@@ -29,14 +29,15 @@ TIME_UNITS - Handles functionality related to time units which represent duratio
 
 TEST CASES:
 
-RECIPE TEST CASE 1 - small test case with 5 recipes
+RECIPES - default test case with 5 recipes
+
+RECIPE TEST CASE 1 - medium test case with 10 recipes
 
 RECIPE TEST CASE 2 - large test case with 40 recipes.
 
 RECIPE TEST CASE 3 - used for testing if we request more of a resource than exists: requests
                       10 baking trays and the default resources provided are only 2.
                      
-RECIPE TEST CASE 4 - medium test case with 10 recipes.                     
                    
 
 USAGE:
