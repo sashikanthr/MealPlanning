@@ -27,6 +27,17 @@ RESOURCE_SERVICE - Handles determining if a requested quantity of a resource is 
 TIME_UNITS - Handles functionality related to time units which represent duration of each activity.
 
 
+TEST CASES:
+
+RECIPE TEST CASE 1 - small test case with 5 recipes
+
+RECIPE TEST CASE 2 - large test case with 40 recipes.
+
+RECIPE TEST CASE 3 - used for testing if we request more of a resource than exists: requests
+                      10 baking trays and the default resources provided are only 2.
+                     
+RECIPE TEST CASE 4 - medium test case with 10 recipes.                     
+                   
 
 USAGE:
 Provide a file "Recipes.txt" and a file "AvailableResources.txt" in the directory above the code 
