@@ -26,8 +26,12 @@ public class MealPlanning {
         List<Resource> availableResources = ResourceService.loadResources(resourceLocation);
         System.out.println("Resources Loaded..."+availableResources.size());
        // ResourceService.printResources();
-        getBestOrder(recipes);
-        System.out.println(RecipeService.getTotalTimeUnitsNeededForAllActivities());
+        if (checkMaxResourcesExist(recipes, availableResources)) {
+            getBestOrder(recipes);
+            System.out.println(RecipeService.getTotalTimeUnitsNeededForAllActivities());
+        } else {
+            System.out.println("Insufficient resources available.");
+        }
     }
 
     private static void getBestOrder(List<Recipe> allRecipes) {
@@ -62,4 +66,21 @@ public class MealPlanning {
     }
 
 
+    private static boolean checkMaxResourcesExist(List<Recipe> recipes, List<Resource> available) {
+        if (ResourceService.getResource(Constants.HUMAN).getOriginalQuantity() == 0) {
+            return false;
+        }
+        for (Recipe recipe : recipes) {
+            List<Activity> activities = recipe.getActivities();
+            for (Activity activity : activities) {
+                List<Resource> needed = activity.getResourcesNeeded();
+                for (Resource r : needed) {
+                    if (!ResourceService.checkAvailability(ResourceService.getResource(r.getResourceName()), r.getQuantity())) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
 }
