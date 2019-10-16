@@ -25,23 +25,21 @@ public class MealPlanning {
         System.out.println("Recipes Loaded..."+recipes.size());
         List<Resource> availableResources = ResourceService.loadResources(resourceLocation);
         System.out.println("Resources Loaded..."+availableResources.size());
-       // ResourceService.printResources();
+
         if (checkMaxResourcesExist(recipes, availableResources)) {
             getBestOrder(recipes);
-            System.out.println(RecipeService.getTotalTimeUnitsNeededForAllActivities());
+
         } else {
             System.out.println("Insufficient resources available.");
         }
-        System.out.println(RecipeService.getTotalTimeUnitsNeededForAllActivities());
+
     }
 
     private static void getBestOrder(List<Recipe> allRecipes) {
         System.out.println("Starting the Genetic Algorithm to get the best sequence");
         GeneticAlgorithm geneticAlgorithm = new GeneticAlgorithm(allRecipes);
         geneticAlgorithm.generateInitialPopulation();
-        int bestFitnessValue = 715;
-        Chromosome bestChromosome;
-        int tempBestFitness;
+
         int maxItrs =0;
         do {
             geneticAlgorithm.selection();
@@ -51,19 +49,15 @@ public class MealPlanning {
             geneticAlgorithm.mutation();
             geneticAlgorithm.evaluateOffSpring();
             geneticAlgorithm.sortOffspring();
-            tempBestFitness = geneticAlgorithm.getBestFitnessValue();
-            System.out.println("Best Fitness Value.."+tempBestFitness);
-            System.out.println("Resource Idle Time for Best Chromosome..."+geneticAlgorithm.getBest().getResourceIdleTime());
+            geneticAlgorithm.getBestFitnessValue();
             maxItrs++;
 
         }while(maxItrs<Constants.MAX_ITRS);
         System.out.println("Found the best sequence after iterations:"+maxItrs);
         System.out.println("Offspring Fitness.."+geneticAlgorithm.getBestOffspringFitness());
         System.out.println("Parent Fitness.."+geneticAlgorithm.getBestParentFitness());
-
         System.out.println("Best Genes.."+geneticAlgorithm.getBest().getGenes());
-
-
+        geneticAlgorithm.printSteps(geneticAlgorithm.getBest());
     }
 
     private static boolean checkMaxResourcesExist(List<Recipe> recipes, List<Resource> available) {
@@ -84,6 +78,7 @@ public class MealPlanning {
 
         return true;
     }
+
 
 
 }

@@ -141,13 +141,9 @@ public class GeneticAlgorithm {
 
         while(i + j == Constants.NUMBER_OF_CHROMOSOMES - 1 && i < Constants.NUMBER_OF_CHROMOSOMES / 2) {
             Chromosome parent1 = population.get(i);
-            //System.out.println("Parent 1");
-            //parent1.representation();
-            //System.out.println();
+
             Chromosome parent2 = population.get(j);
-            //System.out.println("Parent 2");
-            //parent2.representation();
-            //System.out.println();
+
             performPMX(parent1, parent2);
             i++;
             j--;
@@ -188,17 +184,13 @@ public class GeneticAlgorithm {
          int i = random.nextInt(parent1.getGenes().size());
          int j = random.nextInt(parent2.getGenes().size());
         // Here the map is that key->value and value->key
-        //System.out.println("Index i.."+i);
-        //System.out.println("Index j.."+j);
+
         if(i>j) {
             //Swap using Bitwise XOR
             i = i^j;
             j = i^j;
             i = i^j;
         }
-
-      //  System.out.println("New Index i.."+i);
-       // System.out.println("New Index j.."+j);
 
          Map<Chromosome.Gene,Chromosome.Gene> crossoverMap = new HashMap<>();
          Chromosome offSpring1 = new Chromosome(parent2.getGenes().size());
@@ -214,7 +206,7 @@ public class GeneticAlgorithm {
          }
 
          //Set the rest of the genes.
-        //System.out.println("Crossover Map.."+crossoverMap);
+
         for(int pointer = 0;pointer<i;pointer++) {
             setGenes(offSpring1,offSpring2,parent1,parent2,crossoverMap,pointer);
         }
@@ -225,11 +217,7 @@ public class GeneticAlgorithm {
 
         offSpring.add(offSpring1);
         offSpring.add(offSpring2);
-    //    System.out.println("OffSpring 1");
-     //   offSpring1.representation();
-      //  System.out.println();
-      //  System.out.println("OffSpring 2");
-       // offSpring2.representation();
+
     }
 
     private void setGenes(Chromosome offSpring1, Chromosome offSpring2, Chromosome parent1, Chromosome parent2,
@@ -312,7 +300,6 @@ public class GeneticAlgorithm {
                 }
                 timeUnitsTaken++;
                 verifyIfAnyResourcesCanBeReleased(timeUnitsTaken);
-                markActivitiesThatAreComplete();
                 resourceIdleTime+=ResourceService.calculateResourceIdleTime();
             }
             markActivitiesThatAreComplete();
@@ -351,6 +338,13 @@ public class GeneticAlgorithm {
 
     private void verifyIfAnyResourcesCanBeReleased(int timeUnitsTaken) {
         ResourceService.releaseResourceQuantities(timeUnitsTaken);
+    }
+
+    public void printSteps(Chromosome chromosome) {
+
+        RecipeService.setPrintRecipeSteps(true);
+        calculateFitness(chromosome);
+
     }
 }
 

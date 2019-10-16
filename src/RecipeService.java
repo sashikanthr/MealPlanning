@@ -10,6 +10,15 @@ public class RecipeService {
 
     private static List<Recipe> recipes;
 
+    private static int stepCounter;
+
+    public static void setPrintRecipeSteps(boolean flag) {
+        printRecipeSteps = flag;
+        stepCounter = 1;
+    }
+
+    private static boolean printRecipeSteps = false;
+
     public static List<Recipe> loadRecipes(String recipeLocation) {
 
         recipes = new ArrayList<>();
@@ -200,6 +209,10 @@ public class RecipeService {
                     if(!ResourceService.areThereAnyResourceQueuesHavingThisActivity(activity)) {
                         activity.setActivityComplete(true);
                         activity.setProgress(false);
+                        if(printRecipeSteps) {
+                            System.out.println(stepCounter+"|"+recipe.getName()+"|"+activity.getAction());
+                            stepCounter++;
+                        }
                     }
                 }
             }
