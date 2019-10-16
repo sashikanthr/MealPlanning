@@ -67,6 +67,10 @@ public class ResourceService {
         }
     }
 
+    /*
+    Release resources based on the time units taken till this instant.
+     */
+
     public static void releaseResourceQuantities(int timeUnitsTaken) {
 
         Consumer<? super Resource> resetQuantity = resource -> {
@@ -78,7 +82,11 @@ public class ResourceService {
     public static List<Resource> getResourceList() {
         return resourceList;
     }
-
+    /*
+    This method helps to mark an Activity to Complete. If an activity is allocated
+    a resource and all the resources are released, the activity can be marked complete.
+    That decision will be made based on this method.
+     */
     public static boolean areThereAnyResourceQueuesHavingThisActivity(Activity activity) {
 
         for(Resource resource:resourceList) {
@@ -120,6 +128,10 @@ public class ResourceService {
 
         return true;
     }
+
+    /*
+    Calculates the resource idle time after a time step.
+     */
 
     public static int calculateResourceIdleTime() {
 

@@ -47,6 +47,12 @@ public class Resource {
     public boolean isAvailable() {
         return available;
     }
+
+    /*
+    Adds resource with the specified quantity to the resource queue.
+    It also records the current running time unit and the number of
+    time units it has to have the lock.
+     */
     
     public boolean use(Activity activity, int quantity,int timeUnitCounterItIsLockedAt, int timeUnitsNeeded) {
 
@@ -65,7 +71,12 @@ public class Resource {
         }
     }
 
-
+    /*
+    Resource queue holds the information of the time unit step it was acquired
+    and the number of time units it has to wait to release the resource.
+    This method takes the current time unit step as the input and resources are released based
+    on the time difference.
+     */
 
     public void release(int timeUnitsTaken) {
 
@@ -85,6 +96,12 @@ public class Resource {
             }
         }
     }
+
+    /*
+    Checks if the required quantity of the resource is available or not.
+    It will also verify the resource queue if any resource could be released
+    in the current time step.
+     */
     
     public boolean isFree(int quantityNeeded, int timeUnitsTaken) {
 
@@ -137,7 +154,11 @@ public class Resource {
         return Objects.hash(resourceName);
     }
 
-
+    /*
+    The ResourceQueue instance is to hold the information of an activity that acquired the resource,
+    the time unit step where this resource was acquired, the quantity of resource acquired and the
+    amount of time units the resource has to be locked.
+     */
 
     class ResourceQueue {
 

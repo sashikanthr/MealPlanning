@@ -249,6 +249,13 @@ public class GeneticAlgorithm {
          return parentGene;
     }
 
+    /*
+    The fitness of a chromosome is evaluated based on the total time units it takes for the whole sequence of the chromosome to be complete.
+    To calculate the fitness score, we consider a timer which runs in an infinite loop where the loop is broken only when all the activities of all recipes are completed.
+    Each iteration in the loop increments the timer by 1 time unit.
+    The fittest chromosome is the one that takes the least number of time units to complete all activities.
+     */
+
         public int calculateFitness(Chromosome chromosome)  {
 
         int timeUnitsTaken = 0;
@@ -315,11 +322,20 @@ public class GeneticAlgorithm {
         return timeUnitsTaken;
     }
 
+    /*
+    Helper method to update the status of completed activities
+     */
+
     private void markActivitiesThatAreComplete() {
 
         RecipeService.markRecipesThatAreComplete();
 
     }
+
+    /*
+    Cleans up the list of processed activities (genes) from the current list. The gene list will only have
+    activities that are In Progress or Not Started.
+     */
 
     private void cleanUpActivitiesThatAreComplete(List<Chromosome.Gene> copyOfGenes) {
         Predicate<Chromosome.Gene> filterCompletedOnes = gene -> {
@@ -335,10 +351,16 @@ public class GeneticAlgorithm {
 
     }
 
-
+    /*
+    Helper method to verify if resources can be released during the timestep or after completing of one time step.
+     */
     private void verifyIfAnyResourcesCanBeReleased(int timeUnitsTaken) {
         ResourceService.releaseResourceQuantities(timeUnitsTaken);
     }
+
+    /*
+    Helper method to print the steps the activities must be performed.
+     */
 
     public void printSteps(Chromosome chromosome) {
 

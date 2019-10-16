@@ -35,6 +35,10 @@ public class MealPlanning {
 
     }
 
+    /*
+    Gets the best order sequence. This is where the Genetic Algorithm starts. It has the sequence of
+    performing the selection, crossover, mutation and evaluation of fitness.
+     */
     private static void getBestOrder(List<Recipe> allRecipes) {
         System.out.println("Starting the Genetic Algorithm to get the best sequence");
         GeneticAlgorithm geneticAlgorithm = new GeneticAlgorithm(allRecipes);
@@ -60,6 +64,9 @@ public class MealPlanning {
         geneticAlgorithm.printSteps(geneticAlgorithm.getBest());
     }
 
+    /*
+    Checks if sufficient resources are present to perform a single activity.
+     */
     private static boolean checkMaxResourcesExist(List<Recipe> recipes, List<Resource> available) {
         if (ResourceService.getResource(Constants.HUMAN).getOriginalQuantity() == 0) {
             return false;

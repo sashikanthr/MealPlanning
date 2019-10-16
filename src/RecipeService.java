@@ -47,16 +47,6 @@ public class RecipeService {
         return recipes;
     }
 
-    private static void printRecipes(List<Recipe> allRecipes) {
-
-        Consumer<? super Recipe> printRecipe = recipe -> {
-
-            System.out.println(recipe);
-            recipe.getActivities().forEach(System.out::println);
-        };
-        allRecipes.forEach(printRecipe);
-    }
-
     private static Activity prepareActivity(String line) {
 
         Activity activity = new Activity();
@@ -135,19 +125,10 @@ public class RecipeService {
         return true;
     }
     
-    public static List<Activity> getPreviousActivities (int recipeIndex, int activityIndex) {
-        Recipe recipe = recipes.get(recipeIndex);
-        Activity activity = getActivityForRecipe(recipeIndex,activityIndex);
-        double priority= activity.getPriority();
-        
-        List<Activity> prev = new ArrayList<>();
-        for(int i = 0; i < activityIndex; i++) {
-            prev.add(recipe.getActivities().get(i));
-        }
-        
-        return prev;
-    }
-
+    /*
+    Each activity has a flag that mentions if the activity is in progress and if it complete.
+    This method will reset the status to process the next gene combination of the chromosome.
+     */
     public static void resetCompleteStatusOnAllActivities() {
 
         for(Recipe recipe:recipes) {
@@ -182,6 +163,7 @@ public class RecipeService {
         
         return timeUnitsNeeded;
     }
+
 
     public static boolean areAllActivitiesComplete(){
 
