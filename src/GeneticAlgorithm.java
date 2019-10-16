@@ -54,7 +54,7 @@ public class GeneticAlgorithm {
          fitnessPopulation = new HashMap<>();
         
          for(Chromosome chromosome: population) {
-             fitnessPopulation.put(chromosome,calculateFitness(chromosome.getGenes()));
+             fitnessPopulation.put(chromosome,calculateFitness(chromosome));
              RecipeService.resetCompleteStatusOnAllActivities();
         }
     }
@@ -129,7 +129,7 @@ public class GeneticAlgorithm {
     public void evaluateOffSpring() {
         fitnessOffspring = new HashMap<>();
         for (Chromosome chromosome: offSpring) {
-            fitnessOffspring.put(chromosome, calculateFitness(chromosome.getGenes()));
+            fitnessOffspring.put(chromosome, calculateFitness(chromosome));
             RecipeService.resetCompleteStatusOnAllActivities();
         }
     }
@@ -163,7 +163,7 @@ public class GeneticAlgorithm {
         Random random = new Random();
         for(int i = 0; i < Constants.NUMBER_OF_CHROMOSOMES / 2; i++) {
             if(Math.random()>0.7) {
-                List<Chromosome.Gene> genes = population.get(i).getGenes();
+                List<Chromosome.Gene> genes = offSpring.get(i).getGenes();
 
                 for(int counter = 0;counter<3;counter++) {
                     int position1 = random.nextInt(genes.size());
@@ -261,12 +261,13 @@ public class GeneticAlgorithm {
          return parentGene;
     }
 
-        public int calculateFitness(List<Chromosome.Gene> genes)  {
+        public int calculateFitness(Chromosome chromosome)  {
 
         int timeUnitsTaken = 0;
         boolean isLoopBroken = false;
+        int resourceIdleTime = 0;
 
-        List<Chromosome.Gene> copyOfGenes = new ArrayList<>(genes);
+        List<Chromosome.Gene> copyOfGenes = new ArrayList<>(chromosome.getGenes());
 
         while(!isLoopBroken) {
 
@@ -312,7 +313,7 @@ public class GeneticAlgorithm {
                 timeUnitsTaken++;
                 verifyIfAnyResourcesCanBeReleased(timeUnitsTaken);
                 markActivitiesThatAreComplete();
-
+                resourceIdleTime+=ResourceService.calculateResourceIdleTime();
             }
             markActivitiesThatAreComplete();
             verifyIfAnyResourcesCanBeReleased(timeUnitsTaken);
@@ -323,7 +324,7 @@ public class GeneticAlgorithm {
             cleanUpActivitiesThatAreComplete(copyOfGenes);
 
         }
-
+        chromosome.setResourceIdleTime(resourceIdleTime);
         return timeUnitsTaken;
     }
 

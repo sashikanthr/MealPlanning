@@ -26,7 +26,12 @@ public class MealPlanning {
         List<Resource> availableResources = ResourceService.loadResources(resourceLocation);
         System.out.println("Resources Loaded..."+availableResources.size());
        // ResourceService.printResources();
-        getBestOrder(recipes);
+        if (checkMaxResourcesExist(recipes, availableResources)) {
+            getBestOrder(recipes);
+            System.out.println(RecipeService.getTotalTimeUnitsNeededForAllActivities());
+        } else {
+            System.out.println("Insufficient resources available.");
+        }
         System.out.println(RecipeService.getTotalTimeUnitsNeededForAllActivities());
     }
 
@@ -48,6 +53,7 @@ public class MealPlanning {
             geneticAlgorithm.sortOffspring();
             tempBestFitness = geneticAlgorithm.getBestFitnessValue();
             System.out.println("Best Fitness Value.."+tempBestFitness);
+            System.out.println("Resource Idle Time for Best Chromosome..."+geneticAlgorithm.getBest().getResourceIdleTime());
             maxItrs++;
 
         }while(maxItrs<Constants.MAX_ITRS);
@@ -58,6 +64,25 @@ public class MealPlanning {
         System.out.println("Best Genes.."+geneticAlgorithm.getBest().getGenes());
 
 
+    }
+
+    private static boolean checkMaxResourcesExist(List<Recipe> recipes, List<Resource> available) {
+        if (ResourceService.getResource(Constants.HUMAN).getOriginalQuantity() == 0) {
+            return false;
+        }
+        for (Recipe recipe : recipes) {
+            List<Activity> activities = recipe.getActivities();
+            for (Activity activity : activities) {
+                List<Resource> needed = activity.getResourcesNeeded();
+                for (Resource r : needed) {
+                    Resource resource = ResourceService.getResource(r.getResourceName());
+                    if(r.getQuantity()>resource.getQuantity())
+                        return false;
+                    }
+                }
+            }
+
+        return true;
     }
 
 

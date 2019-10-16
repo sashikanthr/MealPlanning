@@ -2,11 +2,19 @@ import java.util.*;
 
 public class Chromosome {
 
-    /*
-    Each chromosome is made of n genes. where n is the total number of activities. Each gene is represented as a string of recipe number and the activity number.
-    Once all genes are added to a list. The list is shuffled.
-    */
+    public int getResourceIdleTime() {
+        return resourceIdleTime;
+    }
 
+    public void setResourceIdleTime(int resourceIdleTime) {
+        this.resourceIdleTime = resourceIdleTime;
+    }
+
+    /*
+        Each chromosome is made of n genes. where n is the total number of activities. Each gene is represented as a string of recipe number and the activity number.
+        Once all genes are added to a list. The list is shuffled.
+        */
+    private int resourceIdleTime;
     private List<Gene> genes;
 
     public Chromosome(){

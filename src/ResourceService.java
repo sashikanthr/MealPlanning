@@ -120,4 +120,18 @@ public class ResourceService {
 
         return true;
     }
+
+    public static int calculateResourceIdleTime() {
+
+        int resourceIdleTime = 0;
+
+        for(Resource resource:resourceList) {
+
+            resourceIdleTime+=resource.getQuantity();
+
+        }
+
+        return resourceIdleTime;
+
+    }
 }
